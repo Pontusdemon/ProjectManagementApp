@@ -35,7 +35,12 @@ const AppSidebar = () => {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="px-2 py-3">
-          <p className="text-lg font-bold">TaskFlow</p>
+          <p className="text-lg font-bold group-data-[collapsible=icon]:hidden">
+            TaskFlow
+          </p>
+          <p className="hidden text-lg font-bold group-data-[collapsible=icon]:block">
+            TF
+          </p>
           <p className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
             Project manager
           </p>
