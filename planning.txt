@@ -1,0 +1,637 @@
+Planning for Project Manager App  TaskFlow Project Management Dashboard
+
+The basic idea:
+
+A team can create projects, organize tasks into a Kanban board, assign tasks to members, track deadlines, and see project progress from a dashboard.
+
+The user should be able to go from:
+
+Dashboard
+    ↓
+Choose Project
+    ↓
+Project Overview
+    ↓
+Kanban Board
+    ↓
+Open Task
+    ↓
+Edit / Assign / Comment
+2. Define the MVP
+
+Don't start by building everything.
+
+Our MVP should contain:
+
+Projects
+Create project
+Edit project
+Delete project
+View projects
+Tasks
+Create task
+Edit task
+Delete task
+Change status
+Assign user
+Set priority
+Set due date
+Kanban board
+TODO          IN PROGRESS       REVIEW          DONE
+────────────────────────────────────────────────────
+Task A        Task C             Task F         Task H
+Task B        Task D             Task G         Task I
+              Task E
+Dashboard
+
+Show:
+
+Projects       8
+Tasks          42
+Completed      27
+Overdue         3
+
+And some charts/progress.
+
+Authentication
+
+Initially, fake/local authentication is enough.
+
+Don't start with a backend.
+
+3. Plan the pages
+
+I'd start with four pages:
+
+/                   Dashboard
+/projects           Projects
+/projects/:id       Project
+/settings           Settings
+
+Later:
+
+/login
+/profile
+/members
+
+The most important page is:
+
+/projects/:id
+
+because that's where the Kanban board lives.
+
+4. Design the layout
+
+The overall application should look something like:
+
+┌─────────────────────────────────────────────────────────┐
+│                    Top Navigation                        │
+├───────────────┬─────────────────────────────────────────┤
+│               │                                         │
+│  Dashboard    │                                         │
+│               │                                         │
+│  Projects     │             Main Content                │
+│               │                                         │
+│  Tasks        │                                         │
+│               │                                         │
+│  Members      │                                         │
+│               │                                         │
+│  Settings     │                                         │
+│               │                                         │
+└───────────────┴─────────────────────────────────────────┘
+
+So your main layout becomes:
+
+<App>
+  <Sidebar />
+  <Main>
+    <Header />
+    <Page />
+  </Main>
+</App>
+
+This is a good opportunity to learn React layouts and nested routing.
+
+5. Plan your components
+
+Don't create components randomly.
+
+Organize them by responsibility.
+
+components/
+├── layout/
+│   ├── Sidebar.tsx
+│   ├── Header.tsx
+│   └── MainLayout.tsx
+│
+├── dashboard/
+│   ├── StatCard.tsx
+│   ├── ProjectProgress.tsx
+│   ├── RecentTasks.tsx
+│   └── ActivityFeed.tsx
+│
+├── projects/
+│   ├── ProjectCard.tsx
+│   ├── ProjectList.tsx
+│   └── CreateProjectDialog.tsx
+│
+├── tasks/
+│   ├── TaskCard.tsx
+│   ├── TaskDetails.tsx
+│   ├── TaskForm.tsx
+│   └── TaskFilters.tsx
+│
+└── kanban/
+    ├── KanbanBoard.tsx
+    ├── KanbanColumn.tsx
+    └── KanbanTask.tsx
+
+This is much better than putting 50 components into one folder.
+
+6. Design your TypeScript models
+
+This is where the project becomes particularly useful for learning TypeScript.
+
+Start by defining your domain.
+
+User
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+Project
+interface Project {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  createdAt: string;
+}
+Task
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  projectId: string;
+  assigneeId?: string;
+  dueDate?: string;
+  createdAt: string;
+}
+
+Then use unions for constrained values:
+
+type TaskStatus =
+  | "todo"
+  | "in-progress"
+  | "review"
+  | "done";
+
+type TaskPriority =
+  | "low"
+  | "medium"
+  | "high";
+
+This is excellent TypeScript practice.
+
+7. Think about relationships
+
+Your data isn't independent.
+
+For example:
+
+Project
+   │
+   ├── Task
+   │     └── Assignee
+   │
+   ├── Task
+   │     └── Assignee
+   │
+   └── Task
+
+A task belongs to a project:
+
+projectId: string;
+
+And potentially a user:
+
+assigneeId?: string;
+
+This teaches you an important concept in application development:
+
+data modeling.
+
+8. Build the static UI first
+
+This is important.
+
+Don't connect a database or API immediately.
+
+Start with fake data.
+
+const projects: Project[] = [
+  {
+    id: "1",
+    name: "Website Redesign",
+    description: "Redesign company website",
+    color: "blue",
+    createdAt: "2026-09-01",
+  },
+];
+
+Then build the UI around it.
+
+Your first milestone should be:
+
+"The entire dashboard works visually with fake data."
+
+Only after that should we add persistence.
+
+9. Build the Dashboard
+
+Start here.
+
+The dashboard might contain:
+
+Good morning, Alex 👋
+
+[ 8 Projects ] [ 42 Tasks ] [ 27 Done ] [ 3 Overdue ]
+
+
+Project Progress
+
+Website Redesign       ████████░░ 80%
+Mobile App             ██████░░░░ 60%
+Marketing              ████░░░░░░ 40%
+
+
+Recent Tasks
+
+Design homepage              High       Today
+Fix login bug                High       Tomorrow
+Write documentation          Medium     Friday
+
+
+Recent Activity
+
+Sarah completed "Homepage"
+Mike created "API integration"
+Alex moved "Login" to Review
+
+This teaches you:
+
+Component composition
+Props
+Arrays
+.map()
+Conditional rendering
+Tailwind layouts
+TypeScript
+10. Build Projects
+
+Create:
+
+Projects
+
+[ + New Project ]
+
+┌────────────────┐
+│ Website        │
+│ Redesign       │
+│                │
+│ ████████░░ 80% │
+│ 12 tasks       │
+└────────────────┘
+
+Make ProjectCard reusable.
+
+<ProjectCard project={project} />
+
+Then:
+
+projects.map(project => (
+  <ProjectCard
+    key={project.id}
+    project={project}
+  />
+))
+11. Build the Kanban board
+
+This is the centerpiece of the project.
+
+Website Redesign
+
+TODO              IN PROGRESS        REVIEW          DONE
+──────────────────────────────────────────────────────────
+
+┌────────────┐    ┌────────────┐    ┌────────────┐
+│ Homepage   │    │ Navigation │    │ Footer     │
+│ Design     │    │            │    │            │
+│            │    │ High       │    │ Medium     │
+│ 🔴 High    │    │            │    │            │
+└────────────┘    └────────────┘    └────────────┘
+
+Component hierarchy:
+
+KanbanBoard
+│
+├── KanbanColumn
+│   ├── KanbanTask
+│   ├── KanbanTask
+│   └── KanbanTask
+│
+├── KanbanColumn
+│   └── KanbanTask
+│
+└── KanbanColumn
+
+This will teach you a lot about rendering dynamic interfaces.
+
+12. Add task creation
+
+Click:
+
++ Add task
+
+Open a shadcn Dialog:
+
+┌─────────────────────────────────┐
+│ Create Task                     │
+│                                 │
+│ Title                           │
+│ [ Design homepage             ] │
+│                                 │
+│ Description                     │
+│ [                             ] │
+│                                 │
+│ Priority                        │
+│ [ High ▼ ]                      │
+│                                 │
+│ Assignee                        │
+│ [ Sarah ▼ ]                     │
+│                                 │
+│ Due date                        │
+│ [ 12 September ]                │
+│                                 │
+│           [Cancel] [Create]     │
+└─────────────────────────────────┘
+
+This is where shadcn becomes very useful.
+
+You can learn:
+
+Dialog
+Input
+Textarea
+Select
+Button
+Form validation
+13. Add task details
+
+Clicking a task should open its details.
+
+┌────────────────────────────────────┐
+│ Design homepage                 ×   │
+│                                    │
+│ Create the new homepage design.    │
+│                                    │
+│ Status      In Progress             │
+│ Priority    High                    │
+│ Assignee    Sarah                   │
+│ Due         Sep 12                  │
+│                                    │
+│ Comments                            │
+│ ────────────────────────────────   │
+│ Sarah: I'll finish this today.     │
+│                                    │
+│ [Add comment...]                   │
+└────────────────────────────────────┘
+14. Add filtering
+
+Once the board works, add:
+
+Search tasks...
+
+Status:     All ▼
+Priority:   All ▼
+Assignee:   All ▼
+
+Then your TypeScript skills get more interesting.
+
+For example:
+
+const filteredTasks = tasks.filter(task => {
+  return task.priority === selectedPriority;
+});
+
+Eventually you'll combine multiple filters.
+
+15. Add drag and drop
+
+Don't start with this.
+
+Get the Kanban board working normally first.
+
+Then add drag-and-drop so users can move:
+
+TODO
+  ↓
+IN PROGRESS
+  ↓
+REVIEW
+  ↓
+DONE
+
+A library such as dnd-kit is a good choice.
+
+This becomes a more advanced React challenge.
+
+16. Add persistence
+
+Once everything works with fake data, decide how you want to persist it.
+
+I'd use:
+
+Stage 1
+
+localStorage
+
+React
+ ↓
+localStorage
+
+This keeps the project simple.
+
+Stage 2
+
+Add a backend.
+
+For example:
+
+React
+ ↓
+TanStack Query
+ ↓
+API
+ ↓
+Database
+
+At that point you can introduce something like Supabase.
+
+Don't add the backend until the frontend is already working.
+
+17. Add authentication
+
+After the core application works:
+
+Login
+  ↓
+Dashboard
+
+Eventually users should only see projects they're members of.
+
+This introduces:
+
+Authentication
+Protected routes
+User sessions
+Authorization
+
+These are important real-world concepts, but they're not necessary for the first version.
+
+18. Add responsive design
+
+Make sure it works at:
+
+Desktop
+┌──────────────────────────────────┐
+│ Sidebar │        Dashboard       │
+└──────────────────────────────────┘
+
+Tablet
+┌──────────────────────────────────┐
+│ ☰      Dashboard                 │
+└──────────────────────────────────┘
+
+Mobile
+┌─────────────────┐
+│ ☰ Dashboard     │
+├─────────────────┤
+│                 │
+│     Content     │
+│                 │
+└─────────────────┘
+
+This is where Tailwind becomes particularly valuable.
+
+19. Add polish
+
+Only after functionality is complete.
+
+Add:
+
+Dark mode
+Skeleton loading
+Empty states
+Toast notifications
+Animations
+Keyboard shortcuts
+Confirmation dialogs
+Error states
+Responsive Kanban scrolling
+
+For example:
+
+No tasks yet 🎉
+
+Create your first task to get started.
+
+[ + Create Task ]
+
+Good applications don't just handle the "happy path."
+
+20. Final architecture
+
+When you're finished, I'd aim for:
+
+src/
+│
+├── components/
+│   ├── ui/                  ← shadcn
+│   ├── layout/
+│   ├── dashboard/
+│   ├── projects/
+│   ├── tasks/
+│   └── kanban/
+│
+├── pages/
+│   ├── Dashboard.tsx
+│   ├── Projects.tsx
+│   ├── Project.tsx
+│   ├── Settings.tsx
+│   └── Login.tsx
+│
+├── hooks/
+│   ├── useProjects.ts
+│   ├── useTasks.ts
+│   └── useAuth.ts
+│
+├── services/
+│   └── api.ts
+│
+├── types/
+│   ├── project.ts
+│   ├── task.ts
+│   └── user.ts
+│
+├── lib/
+│   └── utils.ts
+│
+├── App.tsx
+└── main.tsx
+The development roadmap
+
+Don't think of this as one giant project. Think of it as 10 milestones:
+
+1. Setup
+   ↓
+2. Layout + Sidebar
+   ↓
+3. Dashboard with fake data
+   ↓
+4. Projects
+   ↓
+5. Tasks
+   ↓
+6. Kanban board
+   ↓
+7. Task dialogs + forms
+   ↓
+8. Filtering + drag/drop
+   ↓
+9. Persistence + API
+   ↓
+10. Authentication + polish
+Recommended stack
+
+For this particular project, I'd use:
+
+React
+TypeScript
+Vite
+Tailwind CSS
+shadcn/ui
+React Router
+TanStack Query
+dnd-kit
+Recharts
+React Hook Form
+Zod
+
+And don't add Redux yet. React state + TanStack Query will teach you more while keeping the architecture manageable.
+
+The most important rule is: build each milestone completely before moving to the next one. For example, don't start authentication while your Kanban board is still broken. That makes the project substantially easier to understand and gives you a series of finished, testable pieces rather than one enormous codebase.  bas the design of the application on this repository of one of my previous project but make it clean and modern so it feels fresh and crisp for the end user https://github.com/Pontusdemon/ReactWeatherApp  don’t code the app just give a text document with the step by step planning for the app

@@ -1,0 +1,725 @@
+TASKFLOW PROJECT MANAGER
+Detailed Project Plan
+
+Purpose
+-------
+Build a project-management dashboard where a user can create projects, manage tasks, organize work on a Kanban board, assign tasks to team members, track deadlines, and monitor progress.
+
+The project should be developed in small, testable milestones. The first release should use local or fake data rather than a backend. This keeps the focus on the user interface, React architecture, TypeScript, and application state.
+
+Product flow
+------------
+1. Open the dashboard.
+2. Review project and task statistics.
+3. Open the Projects page.
+4. Select a project.
+5. View the project overview and Kanban board.
+6. Open a task.
+7. Edit, assign, prioritize, or comment on the task.
+8. Move the task through TODO, IN PROGRESS, REVIEW, and DONE.
+9. Return to the dashboard and see updated progress.
+
+MVP scope
+---------
+The first complete version must include:
+
+- Dashboard with project, task, completed, and overdue statistics.
+- Project list.
+- Create, edit, view, and delete projects.
+- Project detail page.
+- Create, edit, view, and delete tasks.
+- Kanban board with four task statuses.
+- Change task status by a clear control; add drag and drop after the basic flow works.
+- Assign a task to a member.
+- Set task priority.
+- Set and display a due date.
+- Task detail panel or dialog.
+- Local or fake authentication state.
+- Settings page with basic local preferences.
+- Responsive layout for desktop and mobile.
+
+Do not add a real backend, complex permissions, notifications, billing, or real-time collaboration until the MVP is stable.
+
+Recommended application structure
+---------------------------------
+Use a feature-based structure so related code stays together:
+
+src/
+  app/
+    App.tsx
+    routes.tsx
+  components/
+    layout/
+      MainLayout.tsx
+      Sidebar.tsx
+      Header.tsx
+    ui/
+      Button.tsx
+      Dialog.tsx
+      Input.tsx
+      Select.tsx
+      EmptyState.tsx
+      ConfirmDialog.tsx
+  features/
+    dashboard/
+      DashboardPage.tsx
+      StatCard.tsx
+      ProjectProgress.tsx
+      RecentTasks.tsx
+      ActivityFeed.tsx
+    projects/
+      ProjectsPage.tsx
+      ProjectPage.tsx
+      ProjectCard.tsx
+      ProjectForm.tsx
+    tasks/
+      TaskCard.tsx
+      TaskDetails.tsx
+      TaskForm.tsx
+      TaskFilters.tsx
+    kanban/
+      KanbanBoard.tsx
+      KanbanColumn.tsx
+      KanbanTask.tsx
+  data/
+    seedData.ts
+    storage.ts
+  types/
+    domain.ts
+  lib/
+    dates.ts
+    ids.ts
+    validation.ts
+  styles/
+    globals.css
+
+The exact names may differ depending on the chosen framework, but responsibilities should remain separated.
+
+Implementation order
+====================
+
+Phase 1: Confirm the foundation
+-------------------------------
+Goal: make sure the project can run before building features.
+
+1. Confirm the technology choices.
+   - Use React and TypeScript.
+   - Use a modern build tool such as Vite if the project is not already initialized.
+   - Use the existing styling system if one exists.
+   - Add a component library such as shadcn/ui only if it matches the project setup.
+   - Use a router for the requested pages.
+
+2. Install and verify dependencies.
+   - Install the router, styling tools, icon library, and form or validation library only when needed.
+   - Start the development server.
+   - Confirm that the default page renders.
+   - Run the type checker and linter before making feature changes.
+
+3. Establish project conventions.
+   - Use strict TypeScript settings.
+   - Use meaningful names instead of one-letter variables.
+   - Keep domain types separate from visual components.
+   - Keep reusable UI components small and focused.
+   - Decide whether dates are stored as ISO strings such as 2026-09-18.
+
+Definition of done:
+- The application starts successfully.
+- The main route renders.
+- Type checking and linting have a known working command.
+
+Phase 2: Define the domain model
+--------------------------------
+Goal: establish one reliable shape for all application data before building screens.
+
+1. Create the core types in types/domain.ts.
+
+   type TaskStatus = "todo" | "in-progress" | "review" | "done";
+   type TaskPriority = "low" | "medium" | "high";
+
+   interface User {
+     id: string;
+     name: string;
+     email: string;
+     avatar?: string;
+   }
+
+   interface Project {
+     id: string;
+     name: string;
+     description: string;
+     color: string;
+     createdAt: string;
+   }
+
+   interface Task {
+     id: string;
+     projectId: string;
+     title: string;
+     description: string;
+     status: TaskStatus;
+     priority: TaskPriority;
+     assigneeId?: string;
+     dueDate?: string;
+     createdAt: string;
+     updatedAt: string;
+   }
+
+   interface Comment {
+     id: string;
+     taskId: string;
+     authorId: string;
+     body: string;
+     createdAt: string;
+   }
+
+2. Define relationships explicitly.
+   - A task belongs to one project through projectId.
+   - A task may have one assignee through assigneeId.
+   - A comment belongs to a task through taskId.
+   - Do not duplicate full project or user objects inside every task.
+
+3. Define action types or update functions.
+   - createProject
+   - updateProject
+   - deleteProject
+   - createTask
+   - updateTask
+   - deleteTask
+   - moveTask
+   - addComment
+
+4. Add seed data for multiple realistic projects, users, tasks, and comments.
+   - Include tasks in every status.
+   - Include all priority levels.
+   - Include completed and overdue tasks.
+   - Include an unassigned task.
+
+Definition of done:
+- All screens can import the same domain types.
+- Seed data can represent every important empty, normal, and edge state.
+
+Phase 3: Build the application shell
+-------------------------------------
+Goal: create the persistent layout used by every page.
+
+1. Create MainLayout.
+   - Render Sidebar and the main content area.
+   - Keep the layout height stable and allow the content area to scroll.
+   - Use a responsive breakpoint to collapse or replace the sidebar on small screens.
+
+2. Build Sidebar.
+   - Add links for Dashboard, Projects, Tasks, Members, and Settings.
+   - Highlight the active route.
+   - Add a compact user area at the bottom.
+   - Make the mobile navigation keyboard and touch friendly.
+
+3. Build Header.
+   - Show the current page title or project name.
+   - Add a user menu or profile control.
+   - Add a mobile navigation trigger.
+   - Keep actions visible without causing horizontal overflow.
+
+4. Add route definitions.
+   - / for Dashboard
+   - /projects for project list
+   - /projects/:projectId for project detail and Kanban board
+   - /settings for settings
+   - Add placeholders for /members and /tasks if those routes are visible in navigation.
+
+Definition of done:
+- Every route renders inside the same layout.
+- Navigation works with mouse, keyboard, and browser back/forward controls.
+- The layout remains usable on a narrow viewport.
+
+Phase 4: Build the static visual system
+---------------------------------------
+Goal: make the complete interface visible with fake data before adding complex state.
+
+1. Establish visual tokens.
+   - Define colors for background, surface, border, text, muted text, success, warning, danger, and project accents.
+   - Define spacing, typography sizes, shadows, and focus styles.
+   - Use a consistent icon set for actions.
+
+2. Create reusable UI primitives.
+   - Button with primary, secondary, ghost, and danger variants.
+   - Input and Textarea.
+   - Select or menu.
+   - Dialog or drawer.
+   - Badge for status and priority.
+   - EmptyState.
+   - LoadingState.
+   - ConfirmDialog.
+
+3. Create reusable display components.
+   - StatCard.
+   - ProjectCard.
+   - TaskCard.
+   - ProgressBar.
+   - Avatar or initials fallback.
+   - Date and priority display.
+
+4. Add loading, empty, and error states even when data is local.
+   - No projects yet.
+   - Project has no tasks.
+   - Filter returned no tasks.
+   - Task or project ID does not exist.
+
+Definition of done:
+- The application has a consistent visual language.
+- Components do not rely on hard-coded screen-specific styles where reuse is expected.
+
+Phase 5: Build the dashboard first
+----------------------------------
+Goal: provide a useful home page using seed data and derived values.
+
+1. Calculate dashboard statistics from the task and project collections.
+   - Total projects.
+   - Total tasks.
+   - Completed tasks.
+   - Overdue tasks.
+
+2. Build the dashboard sections.
+   - Greeting and current date.
+   - Statistic cards.
+   - Project progress list.
+   - Recent tasks list.
+   - Recent activity feed.
+
+3. Derive project progress consistently.
+   - Count tasks belonging to the project.
+   - Count tasks with status done.
+   - Calculate percentage safely when a project has zero tasks.
+
+4. Make dashboard items navigable.
+   - Project progress opens the project page.
+   - Recent task opens task details or its project.
+   - Activity items use real IDs rather than only display text.
+
+5. Verify the dashboard with seed data and with empty collections.
+
+Definition of done:
+- Dashboard numbers come from data rather than manually typed values.
+- Clicking a project or task leads to the correct destination.
+
+Phase 6: Build projects management
+----------------------------------
+Goal: allow users to manage the project collection.
+
+1. Build the Projects page.
+   - Show page title and New Project action.
+   - Render projects as cards or a responsive list.
+   - Show project name, description, progress, task count, and accent color.
+   - Add an empty state when no projects exist.
+
+2. Build ProjectForm.
+   - Name: required and trimmed.
+   - Description: optional but length-limited.
+   - Color: selected from a controlled palette.
+   - Show field-level validation messages.
+   - Disable submission while invalid or processing.
+
+3. Implement create project.
+   - Generate a unique ID.
+   - Set createdAt.
+   - Add the project to the shared state.
+   - Close the dialog after success.
+   - Display a clear success or error state.
+
+4. Implement edit project.
+   - Reuse ProjectForm.
+   - Pre-fill existing values.
+   - Preserve the project ID and createdAt.
+
+5. Implement delete project.
+   - Require confirmation.
+   - Explain whether related tasks will also be deleted.
+   - For the MVP, either delete related tasks intentionally or block deletion until tasks are handled. Use one consistent rule.
+
+6. Make ProjectCard link to /projects/:projectId.
+
+Definition of done:
+- Projects can be created, edited, opened, and deleted without refreshing the browser.
+- Invalid forms cannot create malformed project records.
+
+Phase 7: Build project details and the Kanban board
+---------------------------------------------------
+Goal: deliver the central workflow of the application.
+
+1. Build the project detail header.
+   - Project name and description.
+   - Progress percentage.
+   - Edit and delete project actions.
+   - Add task action.
+   - Back link to Projects.
+
+2. Build KanbanBoard.
+   - Define the four columns from a constant list rather than duplicating markup.
+   - Filter tasks by projectId.
+   - Group tasks by status.
+   - Show a task count in each column.
+   - Show an empty-column message when needed.
+
+3. Build KanbanColumn.
+   - Render column title, count, and task list.
+   - Provide a stable drop target if drag and drop is enabled.
+   - Keep the column layout usable when there are many tasks.
+
+4. Build KanbanTask.
+   - Show title, priority, assignee, and due date.
+   - Show overdue state clearly.
+   - Make the entire task card keyboard accessible.
+   - Open task details on click or Enter.
+
+5. Start with a simple status control.
+   - Add a status menu to each task.
+   - Update the task status in shared state.
+   - Verify that the task immediately appears in the new column.
+
+6. Add drag and drop only after status updates work.
+   - Use a proven drag-and-drop library if needed.
+   - Keep the status menu as an accessible fallback.
+   - Update status only after a valid drop.
+   - Avoid losing task data if a drop is cancelled.
+
+Definition of done:
+- A project shows only its own tasks.
+- Tasks can move through all four statuses.
+- A user can operate the board without relying only on drag and drop.
+
+Phase 8: Add task creation and editing
+--------------------------------------
+Goal: make tasks fully manageable from the project page.
+
+1. Build TaskForm in a dialog or side drawer.
+   - Title: required and trimmed.
+   - Description: optional and length-limited.
+   - Priority: low, medium, or high.
+   - Assignee: optional user selection.
+   - Due date: optional date input.
+   - Status: default to todo for new tasks.
+
+2. Implement create task.
+   - Require a valid projectId.
+   - Generate ID and timestamps.
+   - Add the task to the shared state.
+   - Open it in the correct Kanban column.
+
+3. Build TaskDetails.
+   - Show title, description, status, priority, assignee, due date, created date, and updated date.
+   - Include Edit and Delete actions.
+   - Include a close button and correct dialog semantics.
+
+4. Implement edit task.
+   - Reuse TaskForm.
+   - Pre-fill all existing values.
+   - Update updatedAt.
+   - Preserve ID, projectId, and createdAt.
+
+5. Implement delete task.
+   - Require confirmation.
+   - Remove the task from the board and dashboard calculations.
+
+6. Add task filters.
+   - Filter by assignee.
+   - Filter by priority.
+   - Filter by due date or overdue state.
+   - Add a search field for task title.
+   - Provide a clear filters action.
+
+Definition of done:
+- The complete task lifecycle works without a page refresh.
+- A task never becomes detached from its project.
+- Filters work together and can be cleared.
+
+Phase 9: Add comments and activity
+----------------------------------
+Goal: make task details useful for collaboration without building a backend.
+
+1. Add comments to the task details view.
+   - Show author, date, and body.
+   - Sort newest or oldest consistently.
+   - Show an empty state when there are no comments.
+
+2. Add a comment form.
+   - Require non-empty text.
+   - Trim whitespace.
+   - Clear the form after success.
+
+3. Add activity records for important changes.
+   - Project created.
+   - Task created.
+   - Task status changed.
+   - Task assigned.
+   - Task completed.
+   - Comment added.
+
+4. Render recent activity on the dashboard.
+   - Store IDs for project, task, and actor.
+   - Generate display text in the UI so names remain current.
+
+Definition of done:
+- Comments and activity use real relationships.
+- Activity does not break when a task or project is deleted.
+
+Phase 10: Add local persistence
+-------------------------------
+Goal: preserve user work between browser refreshes without a backend.
+
+1. Define storage keys and a storage schema.
+   - Use one versioned object rather than unrelated unstructured keys.
+   - Store projects, tasks, users, comments, activities, and preferences.
+
+2. Create a storage adapter in data/storage.ts.
+   - loadState(): AppState.
+   - saveState(state: AppState): void.
+   - clearState(): void.
+   - Catch malformed or unavailable localStorage data.
+   - Fall back to seed data when storage is empty or invalid.
+
+3. Initialize application state from storage once.
+   - Avoid overwriting saved data with seed data on every render.
+   - Save changes after state updates.
+   - Keep storage logic outside presentational components.
+
+4. Add reset demo data in Settings.
+   - Require confirmation.
+   - Restore seed data only after the user confirms.
+
+5. Test persistence manually.
+   - Create a project.
+   - Create and edit a task.
+   - Refresh the page.
+   - Confirm that all changes remain.
+
+Definition of done:
+- User changes survive refresh.
+- Invalid saved data does not crash the application.
+- Resetting data is explicit and reversible only through the chosen reset behavior.
+
+Phase 11: Add fake authentication and settings
+-----------------------------------------------
+Goal: establish the initial user experience without implementing a server.
+
+1. Add a local current user.
+   - Store the selected user ID in local state or persisted state.
+   - Display the user in the header and activity records.
+
+2. Add a simple login screen only if the main workflow is stable.
+   - Use a small list of demo users or a local email field.
+   - Do not imply that it provides real security.
+   - Protect application routes through local authentication state.
+
+3. Build Settings.
+   - Current user selection.
+   - Theme or appearance preference if supported.
+   - Date format preference if needed.
+   - Reset demo data.
+   - Version or data status information.
+
+4. Verify logout and login behavior.
+   - Logout should return to login.
+   - Login should return to the dashboard.
+   - Protected screens should not render when unauthenticated.
+
+Definition of done:
+- The local user experience is coherent.
+- Authentication is clearly a demo-only client-side feature.
+
+Phase 12: Accessibility and responsive behavior
+------------------------------------------------
+Goal: ensure the application works for more than a desktop mouse user.
+
+1. Keyboard accessibility.
+   - All buttons and links are reachable by Tab.
+   - Dialogs trap focus and return focus when closed.
+   - Escape closes dismissible dialogs.
+   - Task cards expose a clear accessible name.
+   - Drag and drop has a non-drag fallback.
+
+2. Screen reader semantics.
+   - Use headings in a logical order.
+   - Label every form control.
+   - Use lists and landmarks appropriately.
+   - Announce important status changes where appropriate.
+   - Do not communicate meaning through color alone.
+
+3. Responsive layouts.
+   - Desktop: sidebar plus multi-column Kanban board.
+   - Tablet: compact sidebar and horizontally scrollable board if necessary.
+   - Mobile: navigation drawer and a usable single-column or horizontally scrollable board.
+   - Keep action buttons and form labels readable at every width.
+
+4. Interaction states.
+   - Add hover, focus-visible, pressed, disabled, loading, and error states.
+   - Make overdue and completed states visually distinct.
+
+Definition of done:
+- The core workflow can be completed with keyboard navigation.
+- No important content is hidden or overlapped on mobile widths.
+
+Phase 13: Testing and quality checks
+------------------------------------
+Goal: prove that the main workflows remain reliable as features are added.
+
+1. Unit test pure functions.
+   - calculateProjectProgress.
+   - getOverdueTasks.
+   - filterTasks.
+   - groupTasksByStatus.
+   - create and update validation.
+   - local storage parsing and fallback behavior.
+
+2. Component test important UI behavior.
+   - Project form validation.
+   - Task form validation.
+   - Kanban status update.
+   - Task details opening and closing.
+   - Delete confirmation.
+   - Empty states.
+
+3. Add an end-to-end smoke test.
+   - Load dashboard.
+   - Open Projects.
+   - Create a project.
+   - Open the project.
+   - Create a task.
+   - Move the task to In Progress.
+   - Edit the task.
+   - Refresh and verify persistence.
+
+4. Run quality checks before every milestone.
+   - Type check.
+   - Lint.
+   - Unit and component tests.
+   - Production build.
+   - Manual responsive check.
+
+5. Test failure cases.
+   - Missing project ID.
+   - Missing required title.
+   - Invalid dates.
+   - Corrupted local storage.
+   - Deleting a project with tasks.
+   - Empty project and empty board.
+
+Definition of done:
+- The main workflow has automated coverage.
+- The production build succeeds.
+- Known warnings and test gaps are documented.
+
+Phase 14: Prepare for a real backend later
+-------------------------------------------
+Goal: keep the MVP ready for future expansion without prematurely building infrastructure.
+
+1. Keep UI components independent from localStorage.
+   - Components should call state actions or a data service.
+   - Do not call localStorage directly from every component.
+
+2. Define a repository boundary.
+   - ProjectRepository.
+   - TaskRepository.
+   - UserRepository.
+   - CommentRepository.
+
+3. Replace the local implementation behind that boundary later with an API implementation.
+   - GET and POST projects.
+   - GET, POST, PATCH, and DELETE tasks.
+   - Authentication and authorization.
+   - Server-side validation.
+
+4. Decide backend concerns only after the local workflow is proven.
+   - Database schema.
+   - User accounts.
+   - Permissions.
+   - File or avatar storage.
+   - Real-time updates.
+   - Audit history.
+
+Suggested milestone order
+=========================
+
+Milestone 1: Foundation
+- Project runs.
+- Routes exist.
+- Main layout exists.
+- Domain types and seed data exist.
+
+Milestone 2: Static product walkthrough
+- Dashboard is visible.
+- Projects page is visible.
+- Project page and Kanban board are visible.
+- Task details are visible.
+- Navigation works.
+
+Milestone 3: Project CRUD
+- Create, edit, and delete projects.
+- Validation and confirmation are complete.
+
+Milestone 4: Task CRUD
+- Create, edit, and delete tasks.
+- Task details and filters work.
+
+Milestone 5: Kanban workflow
+- Status changes work with controls.
+- Drag and drop is added and tested if it improves usability.
+
+Milestone 6: Persistence and collaboration basics
+- Local storage works.
+- Comments and activity feed work.
+- Demo authentication and settings work.
+
+Milestone 7: Quality pass
+- Responsive behavior, accessibility, tests, error states, and production build are complete.
+
+Milestone 8: Backend planning
+- Repository boundaries are identified.
+- Backend work is planned separately from the MVP.
+
+Rules for building each feature
+================================
+
+For every feature, follow this loop:
+
+1. Define or update the TypeScript model.
+2. Add or update seed data for the feature.
+3. Build the static component with realistic props.
+4. Add the smallest state action needed.
+5. Connect the component to the route or parent feature.
+6. Add validation and empty/error states.
+7. Test the normal case and at least one failure case.
+8. Check keyboard and responsive behavior.
+9. Run type checking, linting, tests, and the production build when appropriate.
+10. Only then move to the next feature.
+
+Important design decisions
+==========================
+
+- The Kanban board is the main product workflow and deserves the most attention.
+- The dashboard must derive its values from the same task data shown on project pages.
+- Forms should be reusable for both create and edit flows.
+- Confirm destructive actions and explain consequences.
+- Use stable IDs and relationships instead of matching records by display name.
+- Store dates consistently and centralize date formatting.
+- Keep drag and drop optional because a status menu is more accessible and easier to test.
+- Do not connect a backend until the local MVP demonstrates that the data model and user flow are correct.
+
+Final MVP checklist
+===================
+
+- [ ] Application starts and builds successfully.
+- [ ] Dashboard displays derived statistics.
+- [ ] Projects can be created, edited, opened, and deleted.
+- [ ] Tasks can be created, edited, opened, and deleted.
+- [ ] Tasks are linked to the correct project.
+- [ ] Tasks can move between all four statuses.
+- [ ] Priority, assignee, and due date are visible and editable.
+- [ ] Overdue tasks are identified correctly.
+- [ ] Task filters and search work.
+- [ ] Comments and recent activity work, or are intentionally deferred.
+- [ ] Data persists after refresh.
+- [ ] Empty, loading, validation, and error states exist.
+- [ ] Layout works on desktop, tablet, and mobile.
+- [ ] Keyboard navigation and focus states work.
+- [ ] Main workflow has automated tests.
+- [ ] Type checking, linting, and production build pass.
+- [ ] Backend work is deferred until the MVP is stable.
