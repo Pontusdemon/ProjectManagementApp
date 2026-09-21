@@ -79,10 +79,10 @@ const AppSidebar = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Pontus">
-              <div className="flex size-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:text-[9px]">
                 P
               </div>
-              <span>Pontus</span>
+              <span className="group-data-[collapsible=icon]:hidden">Pontus</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
