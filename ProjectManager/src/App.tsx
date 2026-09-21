@@ -8,8 +8,15 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<MainLayout />} />
-        <Route index element={<DashboardPage />} />
+        <Route element={<MainLayout />}>
+          <Route index element={<DashboardPage />} />
+
+          {/* Add these as you build the pages */}
+          {/* <Route path="projects" element={<ProjectsPage />} /> */}
+          {/* <Route path="tasks" element={<TasksPage />} /> */}
+          {/* <Route path="members" element={<MembersPage />} /> */}
+          {/* <Route path="settings" element={<SettingsPage />} /> */}
+        </Route>
       </Routes>
     </BrowserRouter>
   )
