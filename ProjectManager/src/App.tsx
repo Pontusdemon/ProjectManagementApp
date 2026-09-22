@@ -1,7 +1,7 @@
 
 import { BrowserRouter, Route, Routes } from 'react-router'
 import MainLayout from './components/layout/MainLayout'
-import DashboardPage from './components/layout/DashboardPage'
+import DashboardPage from './components/fetaures/DashboardPage'
 
 function App() {
 
