@@ -1,14 +1,14 @@
-type TaskStatus = "todo" | "in-progress" | "review" | "done";
-   type TaskPriority = "low" | "medium" | "high";
+export type TaskStatus = "todo" | "in-progress" | "review" | "done";
+export type TaskPriority = "low" | "medium" | "high";
 
-   interface User {
+   export interface User {
      id: string;
      name: string;
      email: string;
      avatar?: string;
    }
 
-   interface Project {
+   export interface Project {
      id: string;
      name: string;
      description: string;
@@ -16,7 +16,7 @@ type TaskStatus = "todo" | "in-progress" | "review" | "done";
      createdAt: string;
    }
 
-   interface Task {
+   export interface Task {
      id: string;
      projectId: string;
      title: string;
@@ -29,7 +29,7 @@ type TaskStatus = "todo" | "in-progress" | "review" | "done";
      updatedAt: string;
    }
 
-   interface Comment {
+   export interface Comment {
      id: string;
      taskId: string;
      authorId: string;
