@@ -1,6 +1,8 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import AppSidebar from "./AppSidebar";
-import { Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 import Header from "./Header";
 
 const MainLayout = () => {
@@ -20,6 +22,9 @@ const MainLayout = () => {
                 supports-[backdrop-filter]:bg-background/60">
                         <p>
                             Made By Pontusdemon
+                            <Link to="https://github.com/Pontusdemon">
+                                <FontAwesomeIcon icon={faGithub} />
+                            </Link>
                         </p>
                     </div>
                 </footer>
