@@ -6,6 +6,7 @@ import {
   parseISO,
   startOfToday,
 } from "date-fns"
+import { Link } from "react-router"
 import { comments, projects, tasks, users } from "@/types/Seeddata"
 import { Avatar, AvatarFallback } from "../ui/avatar"
 import { Badge } from "../ui/badge"
@@ -105,7 +106,11 @@ const DashboardPage = () => {
                 : 0
 
               return (
-                <div key={project.id} className="space-y-2">
+                <Link
+                  key={project.id}
+                  to={`/projects/${project.id}`}
+                  className="block space-y-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
                   <div className="flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
@@ -123,7 +128,7 @@ const DashboardPage = () => {
                     value={progress}
                     aria-label={`${project.name} progress`}
                   />
-                </div>
+                </Link>
               )
             })}
           </CardContent>
@@ -150,27 +155,32 @@ const DashboardPage = () => {
                   const isOverdue = isBefore(parseISO(task.dueDate!), today)
 
                   return (
-                    <li key={task.id} className="flex items-center gap-3">
-                      <Avatar size="sm">
-                        <AvatarFallback>
-                          {assignee?.name
-                            .split(" ")
-                            .map((part) => part[0])
-                            .join("") ?? "—"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {task.title}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {project?.name ?? "Unknown project"}
-                          {assignee ? ` · ${assignee.name}` : " · Unassigned"}
-                        </p>
-                      </div>
-                      <Badge variant={isOverdue ? "destructive" : "outline"}>
-                        {getDueLabel(task.dueDate!)}
-                      </Badge>
+                    <li key={task.id}>
+                      <Link
+                        to={`/projects/${task.projectId}`}
+                        className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <Avatar size="sm">
+                          <AvatarFallback>
+                            {assignee?.name
+                              .split(" ")
+                              .map((part) => part[0])
+                              .join("") ?? "—"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {task.title}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {project?.name ?? "Unknown project"}
+                            {assignee ? ` · ${assignee.name}` : " · Unassigned"}
+                          </p>
+                        </div>
+                        <Badge variant={isOverdue ? "destructive" : "outline"}>
+                          {getDueLabel(task.dueDate!)}
+                        </Badge>
+                      </Link>
                     </li>
                   )
                 })}
