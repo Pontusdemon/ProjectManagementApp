@@ -1,21 +1,42 @@
-import { Card } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
-import { isBefore, parseISO, startOfToday } from "date-fns"
+import { addDays, format, isBefore, isToday, parseISO, startOfToday } from "date-fns"
 import { projects, tasks, users } from "@/types/Seeddata"
+import { Progress } from "../ui/progress";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Badge } from "../ui/badge";
 
 const DashboardPage = () => {
     const totalProjects  = projects.length
     const totalTasks = tasks.length
     const completedTasks = tasks.filter((task) => task.status === "done").length
 
+    const today = startOfToday()
+    const dueSoonLimit = addDays(today, 7)
+
+    // include overdue, today, and upcoming tasks due within seven days
+    const dueSoonTasks = tasks.filter((task) => {
+        if(task.status === "done" || !task.dueDate) return false
+        return parseISO(task.dueDate) <= dueSoonLimit
+    })
+    .sort((first, second) =>
+    parseISO(first.dueDate!).getTime() - parseISO(second.dueDate!).getTime()).slice(0,5)
+
+    const getDueLabel = (dueDate: string) => {
+        const date = parseISO(dueDate)
+        if(isBefore(date, today)) return "Overdue"
+        if(isToday(date)) return "Due today"
+        return format(date, "MMM d")
+    }
+
     const overdueTasks = tasks.filter(
     (task) =>
       task.status !== "done" &&
       task.dueDate &&
-      isBefore(parseISO(task.dueDate), startOfToday())
-  )
+    isBefore(parseISO(task.dueDate), today)
+    )
 
-  const overdueTaskCount = overdueTasks.length
+    const overdueTaskCount = overdueTasks.length
 
 	return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
@@ -50,10 +71,81 @@ const DashboardPage = () => {
         {/* Mobile: Due soon, then Project progress. Desktop: reversed. */}
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card className="order-2 p-6 lg:order-1">
-                Project Progress
+                <CardHeader>
+                        <CardTitle>Project Progress</CardTitle>
+                </CardHeader>
+
+                <CardContent className="space-y-6">
+                    {projects.map((project) => {
+                        const projectTasks = tasks.filter((task) => task.projectId === project.id)
+                        const completed = projectTasks.filter((task) => task.status === "done").length
+                        const progress = projectTasks.length ? Math.round((completed / projectTasks.length) * 100) : 0
+
+                        return (
+                            <div key={project.id} className="space-y-2">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-medium">
+                                            {project.name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {completed} of {projectTasks.length} tasks complete
+                                        </p>
+                                    </div>
+                                    <span className="text-sm tabular-nums text-muted-foreground">
+                                        {progress}%
+                                    </span>
+                                </div>
+                                <Progress value={progress} aria-label={`${project.name} progress`} />
+                            </div>
+                        )
+                    })}
+                </CardContent>
             </Card>
+
             <Card className="order-1 p-6 lg:order-2">
-                Due Soon
+                <CardHeader>
+                    <CardTitle>
+                        Due Soon
+                    </CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                    {dueSoonTasks.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                            Nothing due in the next 7 days.
+                        </p>) :
+                        (<ul className="space-y-4">
+                            {dueSoonTasks.map((task) => {
+                                const assignee = users.find((user) => user.id === task.assigneeId)
+                                const project = projects.find((item) => item.id === task.projectId)
+                                const isOverdue = isBefore(parseISO(task.dueDate!), today)
+
+                                return (
+                                    <li key={task.id} className="flex items-center gap-3">
+                                        <Avatar size="sm">
+                                            <AvatarFallback>
+                                                {assignee?.name.split(" ").map((part) => part[0]).join("") ?? "—"}
+                                            </AvatarFallback>
+                                        </Avatar>
+
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-medium">
+                                                {task.title}
+                                            </p>
+                                            <p className="truncate text-xs text-muted-foreground">
+                                                {project?.name ?? "Unknown project"}{assignee ? ` · ${assignee.name}` : " · Unassigned"}
+                                            </p>
+                                        </div>
+
+                                        <Badge variant={isOverdue ? "destructive" :"outline"}>
+                                            {getDueLabel(task.dueDate!)}
+                                        </Badge>
+                                    </li>
+                                )
+                            })}
+                        </ul>)}
+                </CardContent>
             </Card>
         </section>
 
