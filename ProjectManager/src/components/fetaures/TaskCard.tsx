@@ -1,7 +1,7 @@
 import { format, isBefore, parseISO, startOfToday } from "date-fns"
 import { CalendarDays } from "lucide-react"
 import type { Task } from "@/types/domain"
-import { users } from "@/types/Seeddata"
+import { useAppState } from "@/components/context/app-state-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,8 @@ interface TaskCardProps {
 }
 
 const TaskCard = ({ task, onOpen }: TaskCardProps) => {
+  const { state } = useAppState()
+  const { users } = state
   const assignee = users.find((user) => user.id === task.assigneeId)
   const initials = assignee
     ? assignee.name

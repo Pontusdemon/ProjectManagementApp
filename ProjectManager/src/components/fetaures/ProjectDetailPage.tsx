@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react"
 import { Link, useParams } from "react-router"
-import { projects, tasks } from "@/types/Seeddata"
 import { Badge } from "@/components/ui/badge"
+import { useAppState } from "@/components/context/app-state-provider"
 import {
   Card,
   CardContent,
@@ -13,6 +13,8 @@ import { Progress } from "@/components/ui/progress"
 import KanbanBoard from "./KanbanBoard"
 
 const ProjectDetailPage = () => {
+    const { state } = useAppState()
+    const { projects, tasks } = state
     const { projectId } = useParams<{ projectId: string }>()
     const project = projects.find((item) => item.id === projectId)
 

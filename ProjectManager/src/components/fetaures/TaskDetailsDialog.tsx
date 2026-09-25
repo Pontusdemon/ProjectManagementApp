@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns"
 import type { Task } from "@/types/domain"
-import { projects, users } from "@/types/Seeddata"
+import { useAppState } from "@/components/context/app-state-provider"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -28,6 +28,8 @@ const TaskDetailsDialog = ({
   open,
   onOpenChange,
 }: TaskDetailsDialogProps) => {
+  const { state } = useAppState()
+  const { projects, users } = state
   const assignee = task
     ? users.find((user) => user.id === task.assigneeId)
     : undefined

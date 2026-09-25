@@ -7,7 +7,7 @@ import {
   startOfToday,
 } from "date-fns"
 import { Link } from "react-router"
-import { comments, projects, tasks, users } from "@/types/Seeddata"
+import { useAppState } from "@/components/context/app-state-provider"
 import { Avatar, AvatarFallback } from "../ui/avatar"
 import { Badge } from "../ui/badge"
 import {
@@ -20,6 +20,8 @@ import { Progress } from "../ui/progress"
 import { Separator } from "../ui/separator"
 
 const DashboardPage = () => {
+  const { state } = useAppState()
+  const { comments, projects, tasks, users } = state
   const totalProjects = projects.length
   const completedTasks = tasks.filter((task) => task.status === "done").length
   const openTasks = tasks.length - completedTasks

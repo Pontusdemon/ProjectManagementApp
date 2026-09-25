@@ -9,9 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { projects, tasks } from "@/types/Seeddata"
+import { useAppState } from "@/components/context/app-state-provider"
 
 const ProjectsPage = () => {
+  const { state } = useAppState()
+  const { projects, tasks } = state
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
