@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react"
 import { z } from "zod"
-import type { Project } from "@/types/domain"
+import { PROJECT_COLOR_VALUES, type Project } from "@/types/domain"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -14,12 +14,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-const projectColors = ["violet", "sky", "emerald", "amber"] as const
-
 const projectSchema = z.object({
     name: z.string().trim().min(1, "Enter a project name.").max(80, "Use 80 characters or fewer."),
     description: z.string().trim().max(300, "Use 300 characters of fewer."),
-    color: z.enum(projectColors),
+    color: z.enum(PROJECT_COLOR_VALUES),
 })
 
 type ProjectDraft = Pick<Project, "name" | "description" | "color">
@@ -130,7 +128,7 @@ const ProjectFormDialog = ({ open, onOpenChange, project, onSave }: ProjectFormD
                                 aria-describedby={colorError ? "project-color-error" : undefined}
                                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
-                                {projectColors.map((color) => (
+                                {PROJECT_COLOR_VALUES.map((color) => (
                                     <option key={color} value={color}>
                                         {color[0].toUpperCase() + color.slice(1)}
                                     </option>

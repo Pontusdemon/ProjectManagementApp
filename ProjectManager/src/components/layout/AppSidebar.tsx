@@ -6,6 +6,7 @@ import {
   Users,
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router"
+import { useAppState } from "@/state/app-state-context"
 
 import {
   Sidebar,
@@ -30,6 +31,13 @@ const navigationItems = [
 
 const AppSidebar = () => {
   const { pathname } = useLocation()
+  const { state } = useAppState()
+  const currentUser = state.users[0]
+  const userName = currentUser?.name ?? "Team member"
+  const userInitials = userName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
 
   return (
     <Sidebar collapsible="icon">
@@ -78,11 +86,11 @@ const AppSidebar = () => {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Pontus">
+            <SidebarMenuButton tooltip={userName}>
               <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:text-[9px]">
-                P
+                {userInitials}
               </div>
-              <span className="group-data-[collapsible=icon]:hidden">Pontus</span>
+              <span className="group-data-[collapsible=icon]:hidden">{userName}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

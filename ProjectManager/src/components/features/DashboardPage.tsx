@@ -7,7 +7,10 @@ import {
   startOfToday,
 } from "date-fns"
 import { Link } from "react-router"
-import { useAppState } from "@/components/context/app-state-provider"
+import { useState } from "react"
+import { useAppState } from "@/state/app-state-context"
+import { Button } from "@/components/ui/button"
+import type { Project } from "@/types/domain"
 import { Avatar, AvatarFallback } from "../ui/avatar"
 import { Badge } from "../ui/badge"
 import {
@@ -18,9 +21,11 @@ import {
 } from "../ui/card"
 import { Progress } from "../ui/progress"
 import { Separator } from "../ui/separator"
+import ProjectFormDialog from "./ProjectFormDialog"
 
 const DashboardPage = () => {
-  const { state } = useAppState()
+  const { state, actions } = useAppState()
+  const [projectFormOpen, setProjectFormOpen] = useState(false)
   const { comments, projects, tasks, users } = state
   const totalProjects = projects.length
   const completedTasks = tasks.filter((task) => task.status === "done").length
@@ -73,9 +78,9 @@ const DashboardPage = () => {
             Here&apos;s what needs your attention today.
           </p>
         </div>
-        <button className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground sm:w-auto">
+        <Button type="button" onClick={() => setProjectFormOpen(true)}>
           New Project
-        </button>
+        </Button>
       </section>
 
       <Separator />
@@ -250,6 +255,19 @@ const DashboardPage = () => {
           </CardContent>
         </Card>
       </section>
+
+      <ProjectFormDialog
+        open={projectFormOpen}
+        onOpenChange={setProjectFormOpen}
+        onSave={(draft: Pick<Project, "name" | "description" | "color">) => {
+          actions.createProject({
+            id: `project-${crypto.randomUUID()}`,
+            ...draft,
+            createdAt: new Date().toISOString().slice(0, 10),
+          })
+          setProjectFormOpen(false)
+        }}
+      />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import type { AppState, Comment, Project, Task, TaskStatus } from "@/types/domain"
+import type { AppState, Comment, Project, Task, TaskStatus } from '@/types/domain'
 
 export type AppAction =
     | { type: "project/created"; project: Project }
@@ -9,8 +9,9 @@ export type AppAction =
     | { type: "task/deleted"; taskId: string }
     | { type: "task/moved"; taskId: string; status: TaskStatus }
     | { type: "comment/added"; comment: Comment }
+    | { type: "current-user/set"; userId: string }
 
-export function appReducer(state: AppState, action: AppAction): AppState {
+export function appReducer(state: AppState, action: AppAction) {
     switch (action.type) {
         case "project/created":
             return {
@@ -21,8 +22,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         case "project/updated":
             return {
                 ...state,
-                projects: state.projects.map((project) => project.id === action.project.id
-                    ? { ...action.project, id: project.id, createdAt: project.createdAt } : project),
+                projects: state.projects.map((project) =>
+                    project.id === action.project.id
+                        ? { ...action.project, id: project.id, createdAt: project.createdAt }
+                        : project
+                ),
             }
 
         case "project/deleted": {
@@ -43,6 +47,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         }
 
         case "task/created":
+            // A task must belong to a project that exists.
             if (!state.projects.some((project) => project.id === action.task.projectId)) {
                 return state
             }
@@ -65,6 +70,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
                         : task
                 ),
             }
+
         case "task/deleted":
             return {
                 ...state,
@@ -91,6 +97,17 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             return {
                 ...state,
                 comments: [...state.comments, action.comment],
+            }
+
+        case "current-user/set":
+            // Fails closed: an unknown id leaves the current user untouched rather
+            // than pointing the whole app at a user that does not exist.
+            if (!state.users.some((user) => user.id === action.userId)) {
+                return state
+            }
+            return {
+                ...state,
+                currentUserId: action.userId,
             }
 
         default: {

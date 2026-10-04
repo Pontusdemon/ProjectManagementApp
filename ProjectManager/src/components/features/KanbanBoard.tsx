@@ -1,22 +1,27 @@
 import { useState } from "react"
-import type { Task, TaskStatus } from "@/types/domain"
+import { TASK_STATUS_VALUES, type Task, type TaskStatus } from "@/types/domain"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import TaskCard from "./TaskCard"
 import TaskDetailsDialog from "./TaskDetailsDialog"
 
-const columns: { status: TaskStatus; title: string }[] = [
-    { status: "todo", title: "To Do" },
-    { status: "in-progress", title: "In Progress" },
-    { status: "review", title: "Review" },
-    { status: "done", title: "Done" },
-]
+const columnTitles: Record<TaskStatus, string> = {
+    todo: "To Do",
+    "in-progress": "In Progress",
+    review: "Review",
+    done: "Done",
+}
+const columns = TASK_STATUS_VALUES.map((status) => ({
+    status,
+    title: columnTitles[status],
+}))
 
 interface KanbanBoardProps {
     tasks: Task[]
 }
 
 const KanbanBoard = ({ tasks }: KanbanBoardProps) => {
-    const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+    const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null
     return (
         <>
             <div className="-mx-4 overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0">
@@ -46,7 +51,7 @@ const KanbanBoard = ({ tasks }: KanbanBoardProps) => {
                                                 <TaskCard
                                                     key={task.id}
                                                     task={task}
-                                                    onOpen={() => setSelectedTask(task)}
+                                                    onOpen={() => setSelectedTaskId(task.id)}
                                                 />
                                             ))
                                         )}
@@ -61,7 +66,7 @@ const KanbanBoard = ({ tasks }: KanbanBoardProps) => {
                 task={selectedTask}
                 open={selectedTask !== null}
                 onOpenChange={(open) => {
-                    if (!open) setSelectedTask(null)
+                    if (!open) setSelectedTaskId(null)
                 }}
             />
         </>

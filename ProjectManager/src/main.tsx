@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ThemeProvider } from './components/context/theme-provider.tsx'
-import { AppStateProvider } from './components/context/app-state-provider'
+import { AppStateProvider } from '@/state/app-state-provider'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,7 +1,7 @@
 import { format, isBefore, parseISO, startOfToday } from "date-fns"
 import { CalendarDays } from "lucide-react"
 import type { Task } from "@/types/domain"
-import { useAppState } from "@/components/context/app-state-provider"
+import { useAppState } from "@/state/app-state-context"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

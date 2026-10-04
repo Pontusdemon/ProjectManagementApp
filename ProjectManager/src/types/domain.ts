@@ -1,5 +1,11 @@
-export type TaskStatus = "todo" | "in-progress" | "review" | "done"
-export type TaskPriority = "low" | "medium" | "high"
+export const TASK_STATUS_VALUES = ["todo", "in-progress", "review", "done"] as const
+export type TaskStatus = (typeof TASK_STATUS_VALUES)[number]
+
+export const TASK_PRIORITY_VALUES = ["low", "medium", "high"] as const
+export type TaskPriority = (typeof TASK_PRIORITY_VALUES)[number]
+
+export const PROJECT_COLOR_VALUES = ["violet", "sky", "emerald", "amber"] as const
+export type ProjectColor = (typeof PROJECT_COLOR_VALUES)[number]
 
 export interface User {
   id: string
@@ -12,7 +18,7 @@ export interface Project {
   id: string
   name: string
   description: string
-  color: string
+  color: ProjectColor
   createdAt: string
 }
 
@@ -38,6 +44,7 @@ export interface Comment {
 }
 
 export interface AppState {
+  currentUserId: string
   projects: Project[]
   tasks: Task[]
   users: User[]

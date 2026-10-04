@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react"
 import { Link, useParams } from "react-router"
 import { Badge } from "@/components/ui/badge"
-import { useAppState } from "@/components/context/app-state-provider"
+import { useAppState } from "@/state/app-state-context"
 import {
   Card,
   CardContent,

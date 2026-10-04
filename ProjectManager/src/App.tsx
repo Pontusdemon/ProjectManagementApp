@@ -1,12 +1,12 @@
 
 import { BrowserRouter, Route, Routes } from "react-router"
 import MainLayout from "./components/layout/MainLayout"
-import DashboardPage from "./components/fetaures/DashboardPage"
-import MembersPage from "./components/fetaures/MembersPage"
-import ProjectDetailPage from "./components/fetaures/ProjectDetailPage"
-import ProjectsPage from "./components/fetaures/ProjectsPage"
-import SettingsPage from "./components/fetaures/SettingsPage"
-import TasksPage from "./components/fetaures/TasksPage"
+import DashboardPage from "./components/features/DashboardPage"
+import MembersPage from "./components/features/MembersPage"
+import ProjectDetailPage from "./components/features/ProjectDetailPage"
+import ProjectsPage from "./components/features/ProjectsPage"
+import SettingsPage from "./components/features/SettingsPage"
+import TasksPage from "./components/features/TasksPage"
 
 function App() {
   return (

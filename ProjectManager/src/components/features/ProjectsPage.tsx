@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { useAppState } from "@/components/context/app-state-provider"
-import type { Project } from "@/types/domain"
+import { useAppState } from "@/state/app-state-context"
+import type { Project, ProjectColor } from "@/types/domain"
 import ConfirmDialog from "./ConfirmDialog"
 import ProjectFormDialog from "./ProjectFormDialog"
 
-const projectAccentClass: Record<string, string> = {
+const projectAccentClass: Record<ProjectColor, string> = {
   violet: "bg-violet-500",
   sky: "bg-sky-500",
   emerald: "bg-emerald-500",
@@ -95,10 +95,10 @@ const ProjectsPage = () => {
             const completedCount = projectTasks.filter(
               (task) => task.status === "done"
             ).length
-            const progress = projectTasks.length
-              ? Math.round((completedCount / projectTasks.length) * 100)
+            const projectTaskCount = projectTasks.length
+            const progress = projectTaskCount
+              ? Math.round((completedCount / projectTaskCount) * 100)
               : 0
-            const relatedTaskCount = taskCountForProject(project.id)
 
             return (
               <li key={project.id}>
@@ -110,7 +110,7 @@ const ProjectsPage = () => {
                         <div className="flex items-center justify-between gap-2">
                           <CardTitle className="flex items-center gap-2 truncate">
                             <span aria-hidden="true"
-                              className={`size-2.5 shrink-0 rounded-full ${projectAccentClass[project.color as keyof typeof projectAccentClass] ?? "bg-primary"}`} />
+                              className={`size-2.5 shrink-0 rounded-full ${projectAccentClass[project.color]}`} />
                             <span className="truncate">
                               {project.name}
                             </span>
@@ -149,7 +149,7 @@ const ProjectsPage = () => {
                   <CardContent className="mt-auto space-y-3">
                     <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                       <span>
-                        {completedCount} of {relatedTaskCount} tasks complete
+                        {completedCount} of {projectTaskCount} tasks complete
                       </span>
                       <span className="tabular-nums">
                         {progress}%

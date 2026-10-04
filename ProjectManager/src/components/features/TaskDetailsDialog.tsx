@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns"
 import type { Task } from "@/types/domain"
-import { useAppState } from "@/components/context/app-state-provider"
+import { useAppState } from "@/state/app-state-context"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,

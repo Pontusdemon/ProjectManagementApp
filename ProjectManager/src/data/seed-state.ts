@@ -1,6 +1,6 @@
-import type { Comment, Project, Task, User } from "./domain";
+import type { AppState, Comment, Project, Task, User } from "@/types/domain"
 
-export const users: User[] = [
+const SEED_USERS: readonly User[] = [
   {
     id: "user-pontus",
     name: "Pontus Ling",
@@ -16,9 +16,9 @@ export const users: User[] = [
     name: "Leo Andersson",
     email: "leo@example.com",
   },
-];
+]
 
-export const projects: Project[] = [
+const SEED_PROJECTS: readonly Project[] = [
   {
     id: "project-website",
     name: "Website Redesign",
@@ -40,9 +40,9 @@ export const projects: Project[] = [
     color: "emerald",
     createdAt: "2026-09-10",
   },
-];
+]
 
-export const tasks: Task[] = [
+const SEED_TASKS: readonly Task[] = [
   {
     id: "task-homepage-design",
     projectId: "project-website",
@@ -137,9 +137,9 @@ export const tasks: Task[] = [
     createdAt: "2026-09-06",
     updatedAt: "2026-09-17",
   },
-];
+]
 
-export const comments: Comment[] = [
+const SEED_COMMENTS: readonly Comment[] = [
   {
     id: "comment-homepage-1",
     taskId: "task-homepage-design",
@@ -154,4 +154,16 @@ export const comments: Comment[] = [
     body: "Please keep the first-run flow to three screens where possible.",
     createdAt: "2026-09-22",
   },
-];
+]
+
+export const SEED_CURRENT_USER_ID = SEED_USERS[0].id
+
+export function createSeedState(): AppState {
+  return {
+    projects: SEED_PROJECTS.map((project) => ({ ...project })),
+    tasks: SEED_TASKS.map((task) => ({ ...task })),
+    users: SEED_USERS.map((user) => ({ ...user })),
+    comments: SEED_COMMENTS.map((comment) => ({ ...comment })),
+    currentUserId: SEED_CURRENT_USER_ID,
+  }
+}

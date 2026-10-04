@@ -1,16 +1,29 @@
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "../context/theme-provider";
+import { useLocation } from "react-router";
+import { useAppState } from "@/state/app-state-context"
+import { useTheme } from "../context/theme-context"
 import { SidebarTrigger } from "../ui/sidebar";
 
 const Header = () => {
     const { theme, setTheme } = useTheme()
+    const { pathname } = useLocation()
+    const { state } = useAppState()
     const isDark = theme === "dark"
+    const projectId = pathname.match(/^\/projects\/([^/]+)/)?.[1]
+    const project = state.projects.find((item) => item.id === projectId)
+    const pageTitle = project?.name ?? ({
+        "/": "Dashboard",
+        "/projects": "Projects",
+        "/tasks": "Tasks",
+        "/members": "Members",
+        "/settings": "Settings",
+    }[pathname] ?? "TaskFlow")
 
     return (
         <header className="flex h-16 shrink-0 items-center border-b px-4">
             <SidebarTrigger />
 
-            <h1 className="ml-2 font-semibold">TaskFlow</h1>
+            <h1 className="ml-2 font-semibold">{pageTitle}</h1>
 
             <button
                 type="button"
