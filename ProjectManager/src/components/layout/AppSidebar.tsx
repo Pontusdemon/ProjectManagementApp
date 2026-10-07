@@ -7,6 +7,7 @@ import {
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router"
 import { useAppState } from "@/state/app-state-context"
+import { getUserById, getInitials } from "@/lib/selectors"
 
 import {
   Sidebar,
@@ -32,12 +33,9 @@ const navigationItems = [
 const AppSidebar = () => {
   const { pathname } = useLocation()
   const { state } = useAppState()
-  const currentUser = state.users[0]
+  const currentUser = getUserById(state.users, state.currentUserId) ?? state.users[0]
   const userName = currentUser?.name ?? "Team member"
-  const userInitials = userName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
+  const userInitials = currentUser ? getInitials(currentUser.name) : "TM"
 
   return (
     <Sidebar collapsible="icon">

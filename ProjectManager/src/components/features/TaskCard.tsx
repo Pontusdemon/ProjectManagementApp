@@ -1,69 +1,96 @@
-import { format, isBefore, parseISO, startOfToday } from "date-fns"
-import { CalendarDays } from "lucide-react"
-import type { Task } from "@/types/domain"
+import { ArrowUpRight, CalendarDays } from "lucide-react"
 import { useAppState } from "@/state/app-state-context"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-
-const priorityVariant = {
-  low: "outline",
-  medium: "secondary",
-  high: "destructive",
-} as const
+import {
+  PRIORITY_BADGE_VARIANT,
+  TASK_PRIORITY_LABELS,
+} from "@/lib/constants"
+import { formatDate, isTaskOverdue } from "@/lib/dates"
+import { getInitials, getUserById } from "@/lib/selectors"
+import type { Task } from "@/types/domain"
+import TaskStatusMenu from "./TaskStatusMenu"
 
 interface TaskCardProps {
   task: Task
   onOpen: () => void
+  onDragStart?: (taskId: string) => void
+  onDragEnd?: () => void
 }
 
-const TaskCard = ({ task, onOpen }: TaskCardProps) => {
+const TaskCard = ({ task, onOpen, onDragStart, onDragEnd }: TaskCardProps) => {
   const { state } = useAppState()
-  const { users } = state
-  const assignee = users.find((user) => user.id === task.assigneeId)
-  const initials = assignee
-    ? assignee.name
-        .split(" ")
-        .map((part) => part[0])
-        .join("")
-    : "—"
-  const isOverdue =
-    task.status !== "done" &&
-    task.dueDate !== undefined &&
-    isBefore(parseISO(task.dueDate), startOfToday())
+  const assignee = getUserById(state.users, task.assigneeId)
+  const overdue = isTaskOverdue(task)
+
+  const handleDragStart = (event: React.DragEvent<HTMLDivElement>) => {
+    event.dataTransfer.effectAllowed = "move"
+    event.dataTransfer.setData("application/task-id", task.id)
+    event.dataTransfer.setData("text/plain", task.id)
+    onDragStart?.(task.id)
+  }
+
+  const handleDragEnd = () => {
+    onDragEnd?.()
+  }
 
   return (
-    <Card className="gap-0 py-0 transition-colors hover:bg-background">
+    <Card
+      draggable={Boolean(onDragStart)}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      className="gap-0 py-0 transition-colors hover:bg-background"
+    >
       <CardContent className="space-y-3 p-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-sm font-medium leading-snug">{task.title}</h3>
-          <Badge variant={priorityVariant[task.priority]} className="capitalize">
-            {task.priority}
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onOpen}
+            className="group h-auto min-w-0 flex-1 items-start justify-start gap-1 rounded-sm p-0 text-left text-sm font-medium leading-snug whitespace-normal hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span className="group-hover:underline">{task.title}</span>
+            <ArrowUpRight
+              aria-hidden="true"
+              className="mt-0.5 size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+            />
+          </Button>
+
+          <Badge
+            variant={PRIORITY_BADGE_VARIANT[task.priority]}
+            className="shrink-0 capitalize"
+          >
+            {TASK_PRIORITY_LABELS[task.priority]}
           </Badge>
         </div>
+
         {task.dueDate && (
           <p
-            className={`flex items-center gap-1.5 text-xs ${isOverdue ? "font-medium text-destructive" : "text-muted-foreground"}`}
+            className={`flex items-center gap-1.5 text-xs ${
+              overdue ? "font-medium text-destructive" : "text-muted-foreground"
+            }`}
           >
             <CalendarDays aria-hidden="true" className="size-3.5" />
             <time dateTime={task.dueDate}>
-              {isOverdue ? "Overdue · " : "Due "}
-              {format(parseISO(task.dueDate), "MMM d, yyyy")}
+              {overdue ? "Overdue · " : "Due "}
+              {formatDate(task.dueDate)}
             </time>
           </p>
         )}
+
         <div className="flex items-center justify-between gap-2 border-t pt-2">
           <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
             <Avatar size="sm" aria-hidden="true">
-              <AvatarFallback>{initials}</AvatarFallback>
+              <AvatarFallback>
+                {assignee ? getInitials(assignee.name) : "—"}
+              </AvatarFallback>
             </Avatar>
             <span className="truncate">{assignee?.name ?? "Unassigned"}</span>
           </span>
-          <Button type="button" variant="ghost" size="sm" onClick={onOpen}>
-            View
-            <span className="sr-only"> details for {task.title}</span>
-          </Button>
+
+          <TaskStatusMenu task={task} />
         </div>
       </CardContent>
     </Card>

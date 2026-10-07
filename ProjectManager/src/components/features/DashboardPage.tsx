@@ -1,69 +1,44 @@
-import {
-  addDays,
-  format,
-  isBefore,
-  isToday,
-  parseISO,
-  startOfToday,
-} from "date-fns"
+import { Plus } from "lucide-react"
 import { Link } from "react-router"
 import { useState } from "react"
 import { useAppState } from "@/state/app-state-context"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import type { Project } from "@/types/domain"
-import { Avatar, AvatarFallback } from "../ui/avatar"
-import { Badge } from "../ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
+import { formatDueLabel, formatShortDate, isTaskOverdue } from "@/lib/dates"
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../ui/card"
-import { Progress } from "../ui/progress"
-import { Separator } from "../ui/separator"
+  getDashboardStats,
+  getDueSoonTasks,
+  getInitials,
+  getProjectById,
+  getProjectProgress,
+  getUserById,
+} from "@/lib/selectors"
 import ProjectFormDialog from "./ProjectFormDialog"
+
+function getGreeting(): string {
+  const hour = new Date().getHours()
+
+  if (hour < 12) return "Good morning"
+  if (hour < 18) return "Good afternoon"
+  return "Good evening"
+}
 
 const DashboardPage = () => {
   const { state, actions } = useAppState()
   const [projectFormOpen, setProjectFormOpen] = useState(false)
-  const { comments, projects, tasks, users } = state
-  const totalProjects = projects.length
-  const completedTasks = tasks.filter((task) => task.status === "done").length
-  const openTasks = tasks.length - completedTasks
+  const { comments, currentUserId, projects, tasks, users } = state
 
-  const today = startOfToday()
-  const dueSoonLimit = addDays(today, 7)
-
-  // Include overdue tasks as well as tasks due today or within the next week.
-  const dueSoonTasks = tasks
-    .filter((task) => {
-      if (task.status === "done" || !task.dueDate) return false
-      return parseISO(task.dueDate) <= dueSoonLimit
-    })
-    .sort(
-      (first, second) =>
-        parseISO(first.dueDate!).getTime() - parseISO(second.dueDate!).getTime()
-    )
-    .slice(0, 5)
-
-  const overdueTaskCount = tasks.filter(
-    (task) =>
-      task.status !== "done" &&
-      task.dueDate &&
-      isBefore(parseISO(task.dueDate), today)
-  ).length
-
-  const getDueLabel = (dueDate: string) => {
-    const date = parseISO(dueDate)
-    if (isBefore(date, today)) return "Overdue"
-    if (isToday(date)) return "Due today"
-    return format(date, "MMM d")
-  }
-
+  const stats = getDashboardStats(projects, tasks)
+  const currentUser = getUserById(users, currentUserId) ?? users[0]
+  const dueSoonTasks = getDueSoonTasks(tasks, 7).slice(0, 5)
   const recentComments = [...comments]
     .sort(
       (first, second) =>
-        parseISO(second.createdAt).getTime() - parseISO(first.createdAt).getTime()
+        new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime()
     )
     .slice(0, 5)
 
@@ -72,13 +47,14 @@ const DashboardPage = () => {
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Good morning, Pontus
+            {getGreeting()}, {currentUser?.name ?? "there"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Here&apos;s what needs your attention today.
           </p>
         </div>
-        <Button type="button" onClick={() => setProjectFormOpen(true)}>
+        <Button render={<Link to="/projects" />} type="button" nativeButton={false}>
+          <Plus aria-hidden="true" />
           New Project
         </Button>
       </section>
@@ -86,58 +62,62 @@ const DashboardPage = () => {
       <Separator />
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="p-4">{totalProjects} Projects</Card>
-        <Card className="p-4">{openTasks} Open Tasks</Card>
-        <Card className="p-4">{completedTasks} Completed</Card>
-        <Card className="p-4">{overdueTaskCount} Overdue</Card>
+        <Card className="p-4">
+          <div className="text-2xl font-semibold">{stats.totalProjects}</div>
+          <div className="text-sm text-muted-foreground">Projects</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-2xl font-semibold">{stats.openTasks}</div>
+          <div className="text-sm text-muted-foreground">Open Tasks</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-2xl font-semibold">{stats.completedTasks}</div>
+          <div className="text-sm text-muted-foreground">Completed</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-2xl font-semibold">{stats.overdueTasks}</div>
+          <div className="text-sm text-muted-foreground">Overdue</div>
+        </Card>
       </section>
 
       <Separator />
 
-      {/* Due soon comes first on mobile; project progress comes first on desktop. */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="order-2 lg:order-1">
           <CardHeader>
             <CardTitle>Project Progress</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {projects.map((project) => {
-              const projectTasks = tasks.filter(
-                (task) => task.projectId === project.id
-              )
-              const completed = projectTasks.filter(
-                (task) => task.status === "done"
-              ).length
-              const progress = projectTasks.length
-                ? Math.round((completed / projectTasks.length) * 100)
-                : 0
+            {projects.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No projects yet. Create one to start tracking work.
+              </p>
+            ) : (
+              projects.map((project) => {
+                const progress = getProjectProgress(tasks, project.id)
 
-              return (
-                <Link
-                  key={project.id}
-                  to={`/projects/${project.id}`}
-                  className="block space-y-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {project.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {completed} of {projectTasks.length} tasks complete
-                      </p>
+                return (
+                  <Link
+                    key={project.id}
+                    to={`/projects/${project.id}`}
+                    className="block space-y-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{project.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {progress.completed} of {progress.total} tasks complete
+                        </p>
+                      </div>
+                      <span className="text-sm tabular-nums text-muted-foreground">
+                        {progress.percentage}%
+                      </span>
                     </div>
-                    <span className="text-sm tabular-nums text-muted-foreground">
-                      {progress}%
-                    </span>
-                  </div>
-                  <Progress
-                    value={progress}
-                    aria-label={`${project.name} progress`}
-                  />
-                </Link>
-              )
-            })}
+                    <Progress value={progress.percentage} aria-label={`${project.name} progress`} />
+                  </Link>
+                )
+              })
+            )}
           </CardContent>
         </Card>
 
@@ -153,13 +133,9 @@ const DashboardPage = () => {
             ) : (
               <ul className="space-y-4">
                 {dueSoonTasks.map((task) => {
-                  const assignee = users.find(
-                    (user) => user.id === task.assigneeId
-                  )
-                  const project = projects.find(
-                    (item) => item.id === task.projectId
-                  )
-                  const isOverdue = isBefore(parseISO(task.dueDate!), today)
+                  const assignee = getUserById(users, task.assigneeId)
+                  const project = getProjectById(projects, task.projectId)
+                  const overdue = isTaskOverdue(task)
 
                   return (
                     <li key={task.id}>
@@ -168,24 +144,17 @@ const DashboardPage = () => {
                         className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         <Avatar size="sm">
-                          <AvatarFallback>
-                            {assignee?.name
-                              .split(" ")
-                              .map((part) => part[0])
-                              .join("") ?? "—"}
-                          </AvatarFallback>
+                          <AvatarFallback>{getInitials(assignee?.name ?? "Unassigned")}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {task.title}
-                          </p>
+                          <p className="truncate text-sm font-medium">{task.title}</p>
                           <p className="truncate text-xs text-muted-foreground">
                             {project?.name ?? "Unknown project"}
                             {assignee ? ` · ${assignee.name}` : " · Unassigned"}
                           </p>
                         </div>
-                        <Badge variant={isOverdue ? "destructive" : "outline"}>
-                          {getDueLabel(task.dueDate!)}
+                        <Badge variant={overdue ? "destructive" : "outline"}>
+                          {task.dueDate ? formatDueLabel(task.dueDate) : "No due date"}
                         </Badge>
                       </Link>
                     </li>
@@ -212,40 +181,23 @@ const DashboardPage = () => {
             ) : (
               <ul className="space-y-5">
                 {recentComments.map((comment) => {
-                  const author = users.find(
-                    (user) => user.id === comment.authorId
-                  )
+                  const author = getUserById(users, comment.authorId)
                   const task = tasks.find((item) => item.id === comment.taskId)
 
                   return (
                     <li key={comment.id} className="flex items-start gap-3">
                       <Avatar size="sm">
-                        <AvatarFallback>
-                          {author?.name
-                            .split(" ")
-                            .map((part) => part[0])
-                            .join("") ?? "?"}
-                        </AvatarFallback>
+                        <AvatarFallback>{getInitials(author?.name ?? "Team")}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm">
-                          <span className="font-medium">
-                            {author?.name ?? "A team member"}
-                          </span>{" "}
-                          commented on{" "}
-                          <span className="font-medium">
-                            {task?.title ?? "a task"}
-                          </span>
+                          <span className="font-medium">{author?.name ?? "A team member"}</span>{" "}
+                          commented on <span className="font-medium">{task?.title ?? "a task"}</span>
                         </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {comment.body}
-                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">{comment.body}</p>
                       </div>
-                      <time
-                        className="shrink-0 text-xs text-muted-foreground"
-                        dateTime={comment.createdAt}
-                      >
-                        {format(parseISO(comment.createdAt), "MMM d")}
+                      <time className="shrink-0 text-xs text-muted-foreground" dateTime={comment.createdAt}>
+                        {formatShortDate(comment.createdAt)}
                       </time>
                     </li>
                   )
@@ -259,7 +211,7 @@ const DashboardPage = () => {
       <ProjectFormDialog
         open={projectFormOpen}
         onOpenChange={setProjectFormOpen}
-        onSave={(draft: Pick<Project, "name" | "description" | "color">) => {
+        onSave={(draft) => {
           actions.createProject({
             id: `project-${crypto.randomUUID()}`,
             ...draft,

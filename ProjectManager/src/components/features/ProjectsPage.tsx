@@ -1,21 +1,26 @@
 import { useState } from "react"
 import { ArrowUpRight, Pencil, Plus, Trash2 } from "lucide-react"
 import { Link } from "react-router"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { PROJECT_COLOR_DOT_CLASS } from "@/lib/constants"
+import { todayIso } from "@/lib/dates"
+import { createId } from "@/lib/ids"
+import { getProjectProgress } from "@/lib/selectors"
 import { useAppState } from "@/state/app-state-context"
-import type { Project, ProjectColor } from "@/types/domain"
+import type { Project } from "@/types/domain"
 import ConfirmDialog from "./ConfirmDialog"
 import ProjectFormDialog from "./ProjectFormDialog"
 
-const projectAccentClass: Record<ProjectColor, string> = {
-  violet: "bg-violet-500",
-  sky: "bg-sky-500",
-  emerald: "bg-emerald-500",
-  amber: "bg-amber-500",
-}
+type ProjectDraft = Pick<Project, "name" | "description" | "color">
 
 const ProjectsPage = () => {
   const { state, actions } = useAppState()
@@ -34,26 +39,30 @@ const ProjectsPage = () => {
     setFormOpen(true)
   }
 
-  const saveProject = (draft: Pick<Project, "name" | "description" | "color">) => {
+  const saveProject = (draft: ProjectDraft) => {
     if (editingProject) {
       actions.updateProject({ ...editingProject, ...draft })
     } else {
       actions.createProject({
-        id: `project-${crypto.randomUUID()}`,
+        id: createId("project"),
         ...draft,
-        createdAt: new Date().toISOString().slice(0, 10),
+        createdAt: todayIso(),
       })
     }
+
     setFormOpen(false)
   }
 
   const deleteProject = () => {
-    if (projectToDelete) actions.deleteProject(projectToDelete.id)
+    if (projectToDelete) {
+      actions.deleteProject(projectToDelete.id)
+    }
     setProjectToDelete(null)
   }
 
-  const taskCountForProject = (projectId: string) =>
-    tasks.filter((task) => task.projectId === projectId).length
+  const relatedTaskCount = projectToDelete
+    ? tasks.filter((task) => task.projectId === projectToDelete.id).length
+    : 0
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
@@ -61,7 +70,7 @@ const ProjectsPage = () => {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Browse your team’s current work.
+            Browse your team&apos;s current work.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -89,76 +98,66 @@ const ProjectsPage = () => {
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {projects.map((project) => {
-            const projectTasks = tasks.filter(
-              (task) => task.projectId === project.id
-            )
-            const completedCount = projectTasks.filter(
-              (task) => task.status === "done"
-            ).length
-            const projectTaskCount = projectTasks.length
-            const progress = projectTaskCount
-              ? Math.round((completedCount / projectTaskCount) * 100)
-              : 0
+            const progress = getProjectProgress(tasks, project.id)
 
             return (
               <li key={project.id}>
                 <Card className="h-full transition-colors hover:bg-muted/20">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-3">
-                      <Link to={`/projects/${project.id}`} className="group min-w-0 flex -1 rounded-sm 
-                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <Link
+                        to={`/projects/${project.id}`}
+                        className="group min-w-0 flex-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
                         <div className="flex items-center justify-between gap-2">
                           <CardTitle className="flex items-center gap-2 truncate">
-                            <span aria-hidden="true"
-                              className={`size-2.5 shrink-0 rounded-full ${projectAccentClass[project.color]}`} />
-                            <span className="truncate">
-                              {project.name}
-                            </span>
+                            <span
+                              aria-hidden="true"
+                              className={`size-2.5 shrink-0 rounded-full ${PROJECT_COLOR_DOT_CLASS[project.color]}`}
+                            />
+                            <span className="truncate">{project.name}</span>
                           </CardTitle>
                           <ArrowUpRight
-                          aria-hidden="true"
-                          className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-y-0.5 group-hover:translate-x-0.5" 
+                            aria-hidden="true"
+                            className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-y-0.5 group-hover:translate-x-0.5"
                           />
                         </div>
                         <CardDescription className="mt-2 line-clamp-2">
                           {project.description || "No description provided."}
                         </CardDescription>
                       </Link>
+
                       <div className="flex shrink-0 items-center gap-1">
                         <Button
-                        type="button"
-                        size="icon-sm"
-                        variant="ghost"
-                        aria-label={`Edit ${project.name}`}
-                        onClick={() => openEditForm(project)}
+                          type="button"
+                          size="icon-sm"
+                          variant="ghost"
+                          aria-label={`Edit ${project.name}`}
+                          onClick={() => openEditForm(project)}
                         >
-                          <Pencil aria-hidden="true"/>
+                          <Pencil aria-hidden="true" />
                         </Button>
                         <Button
-                        type="button"
-                        size="icon-sm"
-                        variant="ghost"
-                        aria-label={`Delete ${project.name}`}
-                        onClick={() => setProjectToDelete(project)} 
+                          type="button"
+                          size="icon-sm"
+                          variant="ghost"
+                          aria-label={`Delete ${project.name}`}
+                          onClick={() => setProjectToDelete(project)}
                         >
-                          <Trash2 aria-hidden="true"/>
+                          <Trash2 aria-hidden="true" />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
+
                   <CardContent className="mt-auto space-y-3">
                     <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                       <span>
-                        {completedCount} of {projectTaskCount} tasks complete
+                        {progress.completed} of {progress.total} tasks complete
                       </span>
-                      <span className="tabular-nums">
-                        {progress}%
-                      </span>
+                      <span className="tabular-nums">{progress.percentage}%</span>
                     </div>
-                    <Progress
-                    value={progress}
-                    aria-label={`${project.name} progress`} 
-                    />
+                    <Progress value={progress.percentage} aria-label={`${project.name} progress`} />
                   </CardContent>
                 </Card>
               </li>
@@ -166,25 +165,28 @@ const ProjectsPage = () => {
           })}
         </ul>
       )}
-      {formOpen && (
-        <ProjectFormDialog
-        key={editingProject?.id ?? "new"}
+
+      <ProjectFormDialog
+        key={editingProject?.id ?? "new-project"}
         open={formOpen}
         onOpenChange={setFormOpen}
         project={editingProject}
         onSave={saveProject}
-        />
-      )}
+      />
 
-      <ConfirmDialog 
-      open={projectToDelete !== null}
-      onOpenChange={(open) => {
-        if (!open) setProjectToDelete(null)
-      }}
-      title={`Delete ${projectToDelete?.name ?? "project"}?`}
-      description={`This removes the project, its ${projectToDelete ? taskCountForProject(projectToDelete.id) : 0} related tasks, and their comments from the current demo session. Refreshing restores the original seed data.`}
-      confirmLabel="Delete project"
-      onConfirm={deleteProject}
+      <ConfirmDialog
+        open={projectToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setProjectToDelete(null)
+        }}
+        title={`Delete ${projectToDelete?.name ?? "project"}?`}
+        description={
+          relatedTaskCount === 0
+            ? "This removes the project and its comments from the current demo session. Refreshing restores the original seed data."
+            : `This removes the project, its ${relatedTaskCount} related tasks, and their comments from the current demo session. Refreshing restores the original seed data.`
+        }
+        confirmLabel="Delete project"
+        onConfirm={deleteProject}
       />
     </div>
   )
