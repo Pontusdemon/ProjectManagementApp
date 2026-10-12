@@ -1,6 +1,5 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGithub } from "@fortawesome/free-brands-svg-icons";
+import { GitBranch } from "lucide-react";
 import AppSidebar from "./AppSidebar";
 import { Link, Outlet } from "react-router";
 import Header from "./Header";
@@ -22,7 +21,7 @@ const MainLayout = () => {
                         <p>
                             Made By Pontusdemon
                             <Link to="https://github.com/Pontusdemon">
-                                <FontAwesomeIcon icon={faGithub} />
+                                <GitBranch aria-hidden="true" className="inline size-4" />
                             </Link>
                         </p>
                     </div>

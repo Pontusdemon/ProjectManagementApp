@@ -39,14 +39,14 @@ const SettingsPage = () => {
 
         <CardContent className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Current user</label>
+            <label htmlFor="current-user" className="text-sm font-medium">Current user</label>
             <Select
               value={currentUser?.id ?? ""}
               onValueChange={(value) => {
                 if (value) actions.setCurrentUser(value)
               }}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="current-user" className="w-full">
                 <SelectValue placeholder="Choose a user" />
               </SelectTrigger>
               <SelectContent>
