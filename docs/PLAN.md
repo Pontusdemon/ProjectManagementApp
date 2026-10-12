@@ -1,7 +1,3 @@
-# TaskFlow Project Manager — Unified Plan
-
-This document replaces the two overlapping planning files. It combines the original product roadmap with the professional code review dated 2026-10-10 (reviewed at commit `65106a7`). The plan is a forward-looking roadmap; review observations are not assumed complete unless checked off below.
-
 ## Review decisions and rationale
 
 | Recommendation | Decision | Why / when |
@@ -11,7 +7,7 @@ This document replaces the two overlapping planning files. It combines the origi
 | Make seed dates relative to the current date | **Do next** | Fixed September 2026 dates have become stale, so the demo shows misleading overdue and due-soon states. |
 | Remove the Vite `manualChunks` block | **Done** | The broad `id.includes('react')` match caught UI libraries before the UI chunk check. The optimization was ineffective and added complexity without a measured benefit. Revisit only with bundle evidence; if retained, match package paths precisely. |
 | Remove duplicated selectors and project creation logic; make reducer pure and typed | **Do in a focused cleanup** | One source of truth reduces inconsistent results. Pass timestamps through actions so reducer results are deterministic and testable. |
-| Remove unused dependencies | **Keep planned libraries for now** | TanStack Query, React Hook Form, Recharts, and dnd-kit are part of the intended future stack. Keep them until a feature uses them or the direction changes. Remove Font Awesome now because it is only used for the GitHub mark and Lucide already supplies that icon. |
+| Remove unused dependencies | **Keep planned libraries for now** | TanStack Query, React Hook Form, Recharts, and dnd-kit are part of the intended future stack. Keep them until a feature uses them or the direction changes. Font Awesome was removed; the footer now uses GitHub's own Primer Octicons React package for its official GitHub mark because Lucide does not include brand logos. |
 | Move shadcn CLI to devDependencies | **Defer to dependency hygiene pass** | A CLI is a development tool, but changing dependency classification is not needed for current behavior. The shadcn styles/runtime imports remain in use. |
 | Delete nine unused generated UI components | **Defer** | Removing generated components saves little and they may be useful soon. Reassess after feature plans settle; components can also be regenerated with the CLI. |
 | Fix the Settings label association | **Done** | The label now targets the custom Select trigger by id. The Tasks search input is already nested in its label and is implicitly associated. |
@@ -32,10 +28,10 @@ This document replaces the two overlapping planning files. It combines the origi
 ## Immediate implementation status
 
 - [x] Consolidate both planning files here.
-- [x] Replace the GitHub link's Font Awesome mark with Lucide's generic GitBranch icon and remove Font Awesome packages. Lucide has no GitHub brand mark.
+- [x] Use GitHub's official `MarkGithubIcon` Octocat mark from Primer Octicons in the footer; keep Lucide for the app's non-brand icons.
 - [x] Remove the ineffective Vite manual chunk splitting.
 - [x] Fix the Settings label association.
-- [x] Restore a working production build after correcting the unsupported Lucide icon import.
+- [x] Restore a working production build after replacing the unsupported Lucide brand icon import.
 - [ ] Persist and validate app state through a versioned storage adapter.
 - [ ] Refresh stale seed dates.
 - [ ] Add focused unit tests for pure logic and storage.
@@ -53,8 +49,8 @@ Checked against the repository on 2026-10-12. A checked item means its implement
 - Four Kanban statuses with a status control and drag/drop handlers; the status control remains available as a fallback.
 - Empty states, confirmation dialogs, form accessibility attributes, and the Settings label association.
 - Basic responsive layout classes and theme preference storage.
-- Font Awesome cleanup and Vite chunk-splitting removal.
-- `npm run lint` and `npm run build` pass after the Lucide icon fix. The build still reports one large JavaScript chunk warning; revisit code splitting only after measuring a user-facing need.
+- Font Awesome cleanup, the official GitHub logo via Primer Octicons, and Vite chunk-splitting removal.
+- `npm run lint` and `npm run build` pass with the GitHub Primer logo import. The build still reports one large JavaScript chunk warning; revisit code splitting only after measuring a user-facing need.
 
 ### Still needed, in recommended order
 

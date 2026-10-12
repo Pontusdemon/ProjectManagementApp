@@ -1,7 +1,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { GitBranch } from "lucide-react";
+import { MarkGithubIcon } from "@primer/octicons-react/MarkGithubIcon";
 import AppSidebar from "./AppSidebar";
-import { Link, Outlet } from "react-router";
+import { Outlet } from "react-router";
 import Header from "./Header";
 
 const MainLayout = () => {
@@ -18,11 +18,11 @@ const MainLayout = () => {
 
                 <footer className="border-t backdrop-blur">
                     <div className="container mx-auto px-4 py-10 text-center text-muted-foreground bg-background/60">
-                        <p>
+                        <p className="inline-flex items-center justify-center gap-2">
                             Made By Pontusdemon
-                            <Link to="https://github.com/Pontusdemon">
-                                <GitBranch aria-hidden="true" className="inline size-4" />
-                            </Link>
+                            <a className="inline-flex items-center" href="https://github.com/Pontusdemon" aria-label="GitHub profile">
+                                <MarkGithubIcon aria-hidden="true" size="small" />
+                            </a>
                         </p>
                     </div>
                 </footer>
