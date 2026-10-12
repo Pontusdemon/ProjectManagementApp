@@ -794,5 +794,5 @@ Final MVP checklist
 - [ ] Layout works on desktop, tablet, and mobile.
 - [ ] Keyboard navigation and focus states work.
 - [ ] Main workflow has automated tests.
-- [ ] Type checking, linting, and production build pass.
+- [x] Type checking, linting, and production build pass (verified 2026-10-12).
 - [x] Backend work is deferred until the MVP is stable.
