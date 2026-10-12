@@ -1,5 +1,78 @@
-TASKFLOW PROJECT MANAGER
-Detailed Project Plan
+# TaskFlow Project Manager — Unified Plan
+
+This document replaces the two overlapping planning files. It combines the original product roadmap with the professional code review dated 2026-10-10 (reviewed at commit `65106a7`). The plan is a forward-looking roadmap; review observations are not assumed complete unless checked off below.
+
+## Review decisions and rationale
+
+| Recommendation | Decision | Why / when |
+| --- | --- | --- |
+| Persist app data in a versioned local storage adapter and validate loads | **Do next** | Refresh currently loses projects and tasks. This is the highest-impact gap and a small step toward a future replaceable storage layer. Fall back to seed data if stored data is invalid. |
+| Add tests for selectors, dates, reducer and storage | **Do early** | These are pure functions and protect core behavior as the project grows. Begin with focused unit tests, then add UI and end-to-end coverage. |
+| Make seed dates relative to the current date | **Do next** | Fixed September 2026 dates have become stale, so the demo shows misleading overdue and due-soon states. |
+| Remove the Vite `manualChunks` block | **Done** | The broad `id.includes('react')` match caught UI libraries before the UI chunk check. The optimization was ineffective and added complexity without a measured benefit. Revisit only with bundle evidence; if retained, match package paths precisely. |
+| Remove duplicated selectors and project creation logic; make reducer pure and typed | **Do in a focused cleanup** | One source of truth reduces inconsistent results. Pass timestamps through actions so reducer results are deterministic and testable. |
+| Remove unused dependencies | **Keep planned libraries for now** | TanStack Query, React Hook Form, Recharts, and dnd-kit are part of the intended future stack. Keep them until a feature uses them or the direction changes. Remove Font Awesome now because it is only used for the GitHub mark and Lucide already supplies that icon. |
+| Move shadcn CLI to devDependencies | **Defer to dependency hygiene pass** | A CLI is a development tool, but changing dependency classification is not needed for current behavior. The shadcn styles/runtime imports remain in use. |
+| Delete nine unused generated UI components | **Defer** | Removing generated components saves little and they may be useful soon. Reassess after feature plans settle; components can also be regenerated with the CLI. |
+| Fix the Settings label association | **Done** | The label now targets the custom Select trigger by id. The Tasks search input is already nested in its label and is implicitly associated. |
+| Split context state to reduce rerenders | **Defer until measured** | This is acceptable at the current app size. Profile before adding complexity; split contexts or selectors if rendering becomes a real bottleneck. |
+| Reorganize folders by feature; unify app state providers | **Defer until a focused refactor** | The current app works and a broad move would create noisy diffs. Use feature grouping when new work justifies moving files; keep provider ownership clear. |
+| Improve README, naming, root layout, `.DS_Store`, and stray root lockfile | **Do as repo polish** | These affect onboarding and repository clarity, not runtime behavior. Confirm the actual app root before moving it; the runnable app currently lives in `ProjectManager/`. |
+| Replace the Vite template README, choose one product/package name, and remove committed clutter | **Do as repo polish** | A useful README and consistent naming help reviewers run and understand the app. Remove the empty root `package-lock.json` and `.DS_Store` only as part of that cleanup; do not relocate the app without checking deployment and tooling assumptions. |
+| Use descriptive commits, branches, and pull requests | **Adopt going forward** | Small, named changes make review, rollback, and learning easier. Do not rewrite existing history just for naming. |
+| Add EditorConfig, Prettier, typed linting, CI, and recommended editor extensions | **Stage after core persistence/tests** | Formatting and CI improve consistency, but formatting the whole repo at once creates a large diff. Add in separate, reviewable steps and tune rules to avoid generated-code noise. |
+| Adopt the stricter ESLint setup and fix its findings | **Do in the quality pass** | Type-aware linting and jsx-a11y can catch issues beyond the current rules. Remove redundant casts only when confirmed, and decide whether dialog autofocus is intentional before changing it. Start with the moderate rule set because the strictest style rules produced substantial noise. |
+| Add i18n (English/Swedish) | **Plan after MVP stability** | Stored domain values and ISO dates already help. Translation files, plural handling, locale-aware dates, translated validation, and matching key tests are useful before the UI grows further, but are a coordinated feature rather than a small cleanup. |
+| Move to Next.js/Nuxt or add a BFF | **Do not switch now** | Vite is appropriate for the local-first React MVP and avoids introducing server/auth complexity. Revisit when a real backend is chosen; compare Vite + Supabase, a separate API, and a full-stack framework against actual needs. |
+| GDPR, Supabase region/RLS, privacy controls | **Required before real user data** | Demo-only browser data does not justify building compliance features now. Before production accounts, plan EU region, DPA/processors, least-privilege RLS, secret handling, privacy notice, export/deletion, retention, and breach procedures. Never expose a Supabase secret key in the browser. |
+| Add activity/history and an immutable audit log | **Defer until collaboration/backend work** | The dashboard currently calls recent comments “activity,” which is narrower than a true event feed. First decide feed vs audit needs, data retention, privacy, and deletion behavior. For a server-backed audit log, write it in database triggers rather than trusting browser-created records. |
+| IndexedDB and offline sync | **Defer until online persistence/backend works** | IndexedDB is a reasonable later storage adapter, but sync brings conflict resolution, tombstones, retries, multiple tabs, auth expiry, and rejected-change UX. Build in stages: localStorage, IndexedDB, backend, offline shell/read-only mode, then sync. |
+| Learn and explain the code, especially reducer and validation transforms | **Ongoing practice** | Being able to add a status value end-to-end is a useful self-check of the domain model and shared constants. Treat generated or AI-assisted code as code to understand and maintain. |
+
+## Immediate implementation status
+
+- [x] Consolidate both planning files here.
+- [x] Replace the GitHub link's Font Awesome mark with Lucide's generic GitBranch icon and remove Font Awesome packages. Lucide has no GitHub brand mark.
+- [x] Remove the ineffective Vite manual chunk splitting.
+- [x] Fix the Settings label association.
+- [x] Restore a working production build after correcting the unsupported Lucide icon import.
+- [ ] Persist and validate app state through a versioned storage adapter.
+- [ ] Refresh stale seed dates.
+- [ ] Add focused unit tests for pure logic and storage.
+- [ ] Pass timestamps through reducer actions to make reducer updates deterministic.
+
+## Current progress against the MVP
+
+Checked against the repository on 2026-10-12. A checked item means its implementation is present; manual device checks and automated tests are called out separately.
+
+### Already implemented
+
+- Application shell, routes, dashboard, projects, tasks, members, and settings pages.
+- Shared domain types, seed data, reducer-based state, derived dashboard/project values, and date helpers.
+- Project and task create/edit/delete flows, validation, task comments, filters/search, and project/task relationships.
+- Four Kanban statuses with a status control and drag/drop handlers; the status control remains available as a fallback.
+- Empty states, confirmation dialogs, form accessibility attributes, and the Settings label association.
+- Basic responsive layout classes and theme preference storage.
+- Font Awesome cleanup and Vite chunk-splitting removal.
+- `npm run lint` and `npm run build` pass after the Lucide icon fix. The build still reports one large JavaScript chunk warning; revisit code splitting only after measuring a user-facing need.
+
+### Still needed, in recommended order
+
+1. Add versioned local persistence with Zod validation and a safe seed-data fallback. This is the biggest user-facing gap: app changes currently disappear on refresh.
+2. Replace fixed September 2026 demo due dates with dates relative to today, so overdue and due-soon examples stay useful.
+3. Add unit tests for selectors, date helpers, reducer behavior, and storage parsing. There is no test script or automated test suite yet.
+4. In the same focused state cleanup, pass timestamps in reducer actions, add an explicit reducer return type, and remove duplicated selector/creation logic identified in the review.
+5. Verify keyboard, screen-reader, tablet, and mobile behavior manually; then address any findings. The code has accessibility and responsive foundations, but those checks are not recorded as complete.
+6. Add a real activity event feed only if that feature remains in scope; current dashboard activity is based on comments. Keep audit history and backend history for the collaboration/backend phase.
+7. After persistence and tests, stage repo polish, formatting, stricter linting, and CI as separate changes. Decide on backend/auth, i18n, GDPR controls, and offline sync only at their roadmap gates.
+
+## How to use this roadmap
+
+Start by inspecting the current implementation and checking off features that already exist. Then work in small changes, updating this document as milestones are actually completed. Do not implement every future technology at once; use the decisions above to keep scope proportional to the current product.
+
+---
+
+## Product plan
 
 Purpose
 -------
@@ -706,20 +779,20 @@ Important design decisions
 Final MVP checklist
 ===================
 
-- [ ] Application starts and builds successfully.
-- [ ] Dashboard displays derived statistics.
-- [ ] Projects can be created, edited, opened, and deleted.
-- [ ] Tasks can be created, edited, opened, and deleted.
-- [ ] Tasks are linked to the correct project.
-- [ ] Tasks can move between all four statuses.
-- [ ] Priority, assignee, and due date are visible and editable.
-- [ ] Overdue tasks are identified correctly.
-- [ ] Task filters and search work.
-- [ ] Comments and recent activity work, or are intentionally deferred.
+- [x] Application type-checks and production build succeeds (verified 2026-10-12); manually launch the dev server when continuing UI work.
+- [x] Dashboard displays derived statistics.
+- [x] Projects can be created, edited, opened, and deleted.
+- [x] Tasks can be created, edited, opened, and deleted.
+- [x] Tasks are linked to the correct project.
+- [x] Tasks can move between all four statuses using board controls and drag/drop handlers.
+- [x] Priority, assignee, and due date are visible and editable.
+- [x] Overdue tasks are derived consistently; refresh seed examples to keep their dates current.
+- [x] Task filters and search are implemented.
+- [x] Comments work; a full event-based activity feed remains future work.
 - [ ] Data persists after refresh.
-- [ ] Empty, loading, validation, and error states exist.
+- [x] Empty, validation, and not-found/error states exist; a loading state will matter once data loads asynchronously.
 - [ ] Layout works on desktop, tablet, and mobile.
 - [ ] Keyboard navigation and focus states work.
 - [ ] Main workflow has automated tests.
 - [ ] Type checking, linting, and production build pass.
-- [ ] Backend work is deferred until the MVP is stable.
+- [x] Backend work is deferred until the MVP is stable.
